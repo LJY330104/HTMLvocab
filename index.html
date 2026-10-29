@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SAT 词汇 · 复习</title>
+<style>
+:root{
+  --bg:#F6F7F4; --surface:#FFFFFF; --surface-2:#EEF0EB; --surface-3:#E5E8E1;
+  --text:#1B1C19; --text-2:#5D6058; --line:#DDE0D8;
+  --primary:#3F6653; --primary-c:#FFFFFF; --primary-soft:#DCEBE1;
+  --good:#2F6B47; --good-soft:#D9EDE0; --good-line:#8FC0A3;
+  --bad:#8C4A3F; --bad-soft:#F3DDD8; --bad-line:#D5A096;
+  --shadow:0 1px 2px rgba(20,28,20,.06), 0 10px 26px rgba(20,28,20,.07);
+  --radius:20px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#12140F; --surface:#1B1E18; --surface-2:#242820; --surface-3:#2E3329;
+    --text:#E6E8DF; --text-2:#A2A79A; --line:#333A2F;
+    --primary:#9FCBAF; --primary-c:#12211A; --primary-soft:#2A3B30;
+    --good:#8CCFA5; --good-soft:#1F3126; --good-line:#4E7F62;
+    --bad:#E0A79A; --bad-soft:#33241F; --bad-line:#8C5C51;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+body{
+  margin:0; min-height:100vh; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  display:flex; justify-content:center;
+  padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+  user-select:none;
+}
+.wrap{width:100%; max-width:620px; display:flex; flex-direction:column; gap:14px}
+
+header{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+header h1{font-size:14px; font-weight:600; margin:0; color:var(--text-2); letter-spacing:.02em}
+header .spacer{flex:1}
+.chip{font-size:12px; font-weight:600; padding:5px 11px; border-radius:999px;
+  background:var(--surface); border:1px solid var(--line); color:var(--text-2);
+  font-variant-numeric:tabular-nums}
+.chip.good{background:var(--good-soft); color:var(--good); border-color:transparent}
+.chip.bad{background:var(--bad-soft); color:var(--bad); border-color:transparent}
+select{
+  font:inherit; font-size:12.5px; font-weight:600; padding:6px 10px; border-radius:999px;
+  border:1px solid var(--line); background:var(--surface); color:var(--text-2); cursor:pointer;
+}
+.bar{height:5px; background:var(--surface-2); border-radius:99px; overflow:hidden}
+.bar > i{display:block; height:100%; width:0; border-radius:99px; background:var(--primary);
+  transition:width .35s cubic-bezier(.2,.8,.2,1)}
+
+/* ---------- 首页 ---------- */
+.home{display:flex; flex-direction:column; gap:14px}
+body:not(.on-home) .home{display:none}
+.hello{font-size:14px; color:var(--text-2); line-height:1.7; margin:2px 0 0}
+.grid{display:grid; grid-template-columns:repeat(2,1fr); gap:9px}
+.tile{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px}
+.tile b{display:block; font-size:24px; font-weight:650; font-variant-numeric:tabular-nums; line-height:1.2}
+.tile span{font-size:12px; color:var(--text-2)}
+.tile.hot b{color:var(--primary)}
+.tile.dim b{opacity:.55}
+
+.btnlist{display:flex; flex-direction:column; gap:9px; margin-top:2px}
+button{
+  font:inherit; font-weight:600; font-size:15px; border:1px solid var(--line);
+  background:var(--surface); color:var(--text); padding:14px 16px; border-radius:15px;
+  cursor:pointer; transition:transform .1s, background .15s, opacity .15s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+button:active{transform:scale(.98)}
+button.primary{background:var(--primary); color:var(--primary-c); border-color:transparent}
+button:disabled{opacity:.38; cursor:not-allowed}
+button .sub{font-size:12px; font-weight:500; opacity:.62}
+.linkbtn{
+  background:none; border:none; color:var(--text-2); font-size:12.5px; font-weight:500;
+  padding:8px; cursor:pointer; text-decoration:underline; text-underline-offset:3px; opacity:.8;
+}
+.hint{font-size:12px; color:var(--text-2); line-height:1.7; opacity:.85}
+
+/* ---------- 答题 ---------- */
+.quiz{display:none; flex-direction:column; gap:12px}
+body.on-quiz .quiz{display:flex}
+body.on-quiz .home{display:none}
+.qhead{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:4px 0 0}
+.word{font-size:clamp(30px,8.4vw,42px); font-weight:680; letter-spacing:-.02em; line-height:1.15; word-break:break-word}
+.pos{font-size:13px; font-weight:600; color:var(--primary); background:var(--primary-soft);
+  padding:3px 11px; border-radius:999px; white-space:nowrap}
+.retry{font-size:11.5px; font-weight:600; color:var(--bad); background:var(--bad-soft);
+  padding:3px 9px; border-radius:999px; white-space:nowrap}
+.ask{font-size:13px; color:var(--text-2)}
+.opts{display:flex; flex-direction:column; gap:9px}
+.opt{
+  display:flex; align-items:flex-start; justify-content:flex-start; gap:11px;
+  width:100%; text-align:left;
+  font:inherit; font-size:15px; line-height:1.55; color:var(--text);
+  background:var(--surface); border:1.5px solid var(--line); border-radius:15px;
+  padding:13px 15px; cursor:pointer;
+  transition:transform .09s, background .16s, border-color .16s, color .16s;
+}
+.opt .txt{flex:1 1 auto; text-align:left}
+.opt:hover:not(:disabled){border-color:var(--primary)}
+.opt:active:not(:disabled){transform:scale(.99)}
+.opt .num{flex:0 0 auto; width:22px; height:22px; border-radius:7px; margin-top:1px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; background:var(--surface-2); color:var(--text-2)}
+.opt.correct{background:var(--good-soft); border-color:var(--good-line); color:var(--good)}
+.opt.correct .num{background:var(--good); color:var(--surface)}
+.opt.wrong{background:var(--bad-soft); border-color:var(--bad-line); color:var(--bad)}
+.opt.wrong .num{background:var(--bad); color:var(--surface)}
+.opt.dim{opacity:.42}
+.opt:disabled{cursor:default}
+.note{font-size:13.5px; line-height:1.65; color:var(--text-2);
+  background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--primary);
+  border-radius:12px; padding:11px 14px; display:none}
+.note.show{display:block}
+.note b{color:var(--text); font-weight:600}
+.req{font-size:12px; color:var(--bad); font-weight:600; display:none; margin-top:-4px}
+.req.show{display:block}
+.chosen{background:var(--bad-soft); color:var(--bad); border-radius:10px;
+  padding:8px 11px; margin:0 0 9px; font-size:13px; line-height:1.6; text-align:left}
+.chosen b{color:inherit}
+.chosen .from{opacity:.8}
+.note .chosen:last-child{margin-bottom:0}
+button.locked{opacity:.55; cursor:progress}
+.retry.ok{color:var(--good); background:var(--good-soft)}
+.export{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px}
+.export-tip{font-size:12.5px; color:var(--text-2); line-height:1.7; margin:0 0 10px; text-align:left}
+.export-tip code{background:var(--surface-2); padding:1px 5px; border-radius:5px; font-size:12px}
+.export textarea{width:100%; height:132px; resize:vertical; box-sizing:border-box;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; line-height:1.5;
+  color:var(--text); background:var(--surface-2); border:1px solid var(--line);
+  border-radius:10px; padding:10px}
+.export-btns{display:flex; gap:8px; margin-top:10px}
+.export-btns button{padding:9px 14px; font-size:13px; border-radius:11px}
+.foot{display:flex; gap:10px}
+button.act{flex:1}
+button.act[hidden]{display:none}
+kbd{font:inherit; font-size:11px; font-weight:600; opacity:.55; border:1px solid currentColor;
+  border-radius:5px; padding:0 5px; margin-left:6px}
+
+/* ---------- 结算 ---------- */
+.summary{display:none; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--radius); box-shadow:var(--shadow); padding:26px 22px; text-align:center}
+body.on-done .summary{display:block}
+body.on-done .quiz, body.on-done .home{display:none}
+.summary h2{margin:0 0 6px; font-size:19px; font-weight:680}
+.summary p{margin:0 0 18px; color:var(--text-2); font-size:14px; line-height:1.65}
+.stats{display:flex; gap:9px; justify-content:center; margin-bottom:18px}
+.stat{flex:1; background:var(--surface-2); border-radius:14px; padding:14px 8px}
+.stat b{display:block; font-size:24px; font-variant-numeric:tabular-nums; line-height:1.2}
+.stat span{font-size:12px; color:var(--text-2)}
+.stat.ok b{color:var(--good)} .stat.no b{color:var(--bad)}
+.nextdue{font-size:12.5px; color:var(--text-2); line-height:1.8; background:var(--surface-2);
+  border-radius:12px; padding:12px 14px; margin-bottom:18px; text-align:left}
+.nextdue b{color:var(--text)}
+.summary .btnlist{gap:8px}
+
+/* ---------- 键位提示 / 提示条 ---------- */
+.keys{display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--text-2); margin-top:1px}
+.keys .warn{color:var(--bad); font-weight:600}
+.keys .go{color:var(--primary); font-weight:600}
+.keys kbd{margin:0 2px 0 0}
+.toast{position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(14px); background:var(--text); color:var(--bg);
+  font-size:13px; font-weight:600; padding:11px 18px; border-radius:999px; max-width:88vw;
+  text-align:center; opacity:0; pointer-events:none; z-index:50;
+  transition:opacity .22s, transform .22s}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.warnbox{background:var(--bad-soft); color:var(--bad); border-radius:12px;
+  padding:10px 13px; font-size:12.5px; line-height:1.7; text-align:left; margin-top:10px}
+
+/* ---------- 空状态 ---------- */
+.empty{display:none; text-align:center; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--radius); box-shadow:var(--shadow); padding:34px 22px}
+body.no-list .empty{display:block}
+body.no-list .loaded-only{display:none}
+body.no-list .hint{display:none}
+.empty-ico{font-size:40px; line-height:1; margin-bottom:12px}
+.empty-t{font-size:17px; font-weight:650; margin:0 0 6px}
+.empty-s{font-size:13px; color:var(--text-2); line-height:1.7; margin:0 0 20px}
+.empty button{max-width:280px; margin:0 auto}
+
+/* ---------- 配色面板 ---------- */
+.iconbtn{width:34px; height:34px; padding:0; border-radius:11px; font-size:16px;
+  background:var(--surface); border:1px solid var(--line); color:var(--text-2);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto}
+.iconbtn:hover{border-color:var(--primary); color:var(--primary)}
+.seedrow{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px}
+.seedrow input[type=color]{width:44px; height:40px; padding:2px; border:1px solid var(--line);
+  border-radius:11px; background:var(--surface-2); cursor:pointer}
+.seedrow input[type=text]{flex:1 1 110px; min-width:100px; font:inherit; font-size:13px;
+  padding:10px 12px; border-radius:11px; border:1px solid var(--line);
+  background:var(--surface-2); color:var(--text); font-family:ui-monospace,Menlo,monospace}
+.seedrow button{flex:0 0 auto; font-size:13px; padding:10px 14px; border-radius:11px}
+.swatches{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:4px}
+.swatch{width:30px; height:30px; border-radius:50%; border:2px solid transparent;
+  cursor:pointer; padding:0; outline-offset:2px}
+.swatch.on{border-color:var(--text)}
+
+@media (max-width:400px){
+  .opt{font-size:14px; padding:12px 13px}
+  kbd{display:none}
+}
+@media (prefers-reduced-motion:reduce){ *{transition-duration:.01ms !important} }
+</style>
+</head>
+<body class="on-home">
+<div class="wrap">
+
+  <header>
+    <h1 id="title">词汇复习</h1>
+    <span class="spacer"></span>
+    <select id="listSel" hidden></select>
+    <span class="chip" id="cLeft" hidden>剩 0</span>
+    <span class="chip good" id="cOk" hidden>✓ 0</span>
+    <span class="chip bad" id="cNo" hidden>✕ 0</span>
+    <button class="iconbtn" id="bTheme" title="Material You 配色" aria-label="配色">🎨</button>
+  </header>
+  <div class="bar"><i id="prog"></i></div>
+
+  <!-- 首页 -->
+  <div class="home">
+    <p class="hello" id="hello">准备一下……</p>
+
+    <div class="empty" id="emptyBox">
+      <div class="empty-ico">📚</div>
+      <p class="empty-t">还没有载入词书</p>
+      <p class="empty-s">选一个 .js 词书文件开始。<br>只在本地读取，不会上传任何内容。</p>
+      <button class="primary" id="bLoad2">选择词书文件</button>
+    </div>
+
+    <div class="loaded-only">
+    <div class="grid">
+      <div class="tile hot"><b id="tDue">0</b><span>今日到期</span></div>
+      <div class="tile"><b id="tNew">0</b><span>还没学</span></div>
+      <div class="tile dim"><b id="tMaster">0</b><span>已掌握</span></div>
+      <div class="tile dim"><b id="tTotal">0</b><span>词库总数</span></div>
+    </div>
+    <div class="btnlist">
+      <button class="primary" id="bMix">开始今天的复习 <span class="sub" id="sMix"></span></button>
+      <button id="bDue">只练到期的 <span class="sub" id="sDue"></span></button>
+      <button id="bAll">全部打乱来一轮 <span class="sub" id="sAll"></span></button>
+      <button id="bSave">💾 一键保存进度到词书</button>
+      <button id="bLoad">📂 选择本地词书文件（.js）</button>
+      <input type="file" id="fileInput" accept=".js,.json,.txt,text/javascript,application/javascript" hidden>
+      <button class="linkbtn" id="bExport">复制进度文本（手动粘贴用）</button>
+      <button class="linkbtn" id="bReset">清空我这本词库的进度</button>
+    </div>
+    </div>
+
+    <p class="hint">
+      复习间隔按 1 / 2 / 4 / 8 / 15 / 30 / 60 天递进。答错的词会当场插回后面第 4、8、16 题，
+      并且进度退回上一档——隔得越久忘得越少，所以宁可多隔几天，也别一个晚上猛刷十遍。
+    </p>
+
+    <div class="export" id="themeBox" hidden>
+      <p class="export-tip">
+        <b>Material You 配色</b>：选一个种子色，整套界面（主色、容器色、中性色、明暗模式）
+        会按 Material 3 的色板规则重新生成。选过的颜色会记住。
+      </p>
+      <div class="seedrow">
+        <input type="color" id="seedColor" value="#3F6653" aria-label="种子色">
+        <input type="text" id="seedHex" value="#3F6653" maxlength="7" spellcheck="false" aria-label="色值">
+        <button id="bSeedImg">🖼 从图片取色</button>
+        <input type="file" id="seedImgInput" accept="image/*" hidden>
+      </div>
+      <div class="swatches" id="swatches"></div>
+      <div class="export-btns">
+        <button id="bSeedReset">恢复默认</button>
+        <button id="bThemeClose">收起</button>
+      </div>
+    </div>
+
+    <div class="export" id="exportBox" hidden>
+      <p class="export-tip">
+        把下面整段追加到<b>你那个词书文件的末尾</b>（比如 <code>lists/list13-14.js</code>）。
+        进度就写在那份词表里了——以后改 <code>index.html</code>、换电脑、清浏览器记录，进度都不会动。
+        页面每次启动会读它，并且和浏览器里的记录取更新的那份。
+      </p>
+      <textarea id="exportText" readonly spellcheck="false"></textarea>
+      <div class="export-btns">
+        <button id="bCopy">复制</button>
+        <button id="bClose">收起</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 答题 -->
+  <div class="quiz">
+    <div class="qhead">
+      <div class="word" id="w">—</div>
+      <div class="pos" id="pos">—</div>
+      <div class="retry" id="retry" hidden>重来 ×2</div>
+    </div>
+    <div class="ask">选出正确释义（按 <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd>）</div>
+    <div class="opts" id="opts"></div>
+    <div class="keys" id="keys"></div>
+    <div class="note" id="note"></div>
+    <div class="req" id="req"></div>
+    <div class="foot">
+      <button class="act primary" id="btnNext" hidden>继续 →</button>
+      <button class="act" id="btnQuit">不练了</button>
+    </div>
+  </div>
+
+  <!-- 结算 -->
+  <div class="summary">
+    <h2 id="sumTitle">这一轮打完啦</h2>
+    <p id="sumText"></p>
+    <div class="stats">
+      <div class="stat ok"><b id="sOk">0</b><span>答对</span></div>
+      <div class="stat no"><b id="sNo">0</b><span>答错</span></div>
+      <div class="stat"><b id="sRate">0%</b><span>一次答对率</span></div>
+    </div>
+    <div class="nextdue" id="nextDue"></div>
+    <div class="btnlist">
+      <button class="primary" id="bSave2">💾 一键保存进度到词书</button>
+      <button id="bHome">回到首页</button>
+      <button id="bAgain" hidden>再练刚才错的</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var INT = [1, 2, 4, 8, 15, 30, 60];      // 天：已掌握到什么档，下一次隔多久
+  var DAY = 86400000;
+  var GAPS = [4, 8, 16];
+  var CONFIRM_GAP = 10;                     // 答对后隔几题再来确认一次                    // 答错后插回队列的“间隔几题”
+
+  // ---- 干扰释义池 ----
+  var EXTRA = [
+    ["v.","使迷惑，迷惑不解"],["v.","减轻，缓和（痛苦）"],["v.","使陶醉，使入迷"],
+    ["v.","警告，告诫"],["v.","证实，确证"],["v.","妨碍，阻挠"],
+    ["v.","召集，集合"],["v.","使适应"],["v.","报答，补偿"],
+    ["v.","推断，演绎"],["v.","使生动，使有生气"],["v.","驳斥，反驳"],
+    ["adj.","恶意的，怀恨的"],["adj.","节俭的，朴素的"],["adj.","健谈的"],
+    ["adj.","顽固的，执拗的"],["adj.","短暂的，转瞬的"],["adj.","坦率的，直言的"],
+    ["n.","手段，权宜之计"],["n.","遗迹，残骸"],["n.","纷争，不和"],
+    ["n.","预兆，征兆"],["n.","税收，赋税"],["n.","叛乱，造反"]
+  ];
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  // ---- 状态 ----
+  var LISTS = window.VOCAB_LISTS || {};
+  var listId = null, LIST = null, TOTAL = 0;
+  var prog = {};                 // 每个词的 SRS 记录
+  var queue = [], qi = 0;        // 本轮队列
+  var wrongCnt = {}, sessOk = {}, sessBad = {}, everBad = {};
+  var confirmScheduled = {}, confirmFlag = {};   // 复查排期 / 本次出现是否为复查
+  var okCount = 0, badCount = 0, firstTryBad = 0, answeredWords = {};
+  var answered = false, cur = -1, opts = [];
+  var loadedFileName = null;   // 记住用户选的文件名，保存时沿用
+
+  // ---- 存储 ----
+  var STORAGE_OK = true;
+  try{ localStorage.setItem('__probe__', '1'); localStorage.removeItem('__probe__'); }
+  catch(e){ STORAGE_OK = false; }
+
+  function storeKey(){ return 'satvocab.v1.' + listId; }
+  function loadProg(){
+    var fromLocal = {};
+    try{
+      var raw = localStorage.getItem(storeKey());
+      fromLocal = raw ? JSON.parse(raw) : {};
+    }catch(e){ fromLocal = {}; }
+    if(!fromLocal || typeof fromLocal !== 'object') fromLocal = {};
+
+    // 词表文件末尾的进度快照（window.VOCAB_PROGRESS）
+    var fromFile = {};
+    try{
+      if(window.VOCAB_PROGRESS && window.VOCAB_PROGRESS[listId]){
+        fromFile = window.VOCAB_PROGRESS[listId];
+      }
+    }catch(e){ fromFile = {}; }
+    if(!fromFile || typeof fromFile !== 'object') fromFile = {};
+
+    // 两边都有同一个词时，取更新时间较新的那条
+    var keys = Object.keys(fromFile).concat(Object.keys(fromLocal));
+    var merged = {};
+    for(var i=0;i<keys.length;i++){
+      var w = keys[i];
+      if(merged[w]) continue;
+      var a = fromFile[w], b = fromLocal[w];
+      if(a && b) merged[w] = ((b.ts || 0) >= (a.ts || 0)) ? b : a;
+      else merged[w] = b || a;
+    }
+    prog = merged;
+  }
+  function saveProg(){
+    try{ localStorage.setItem(storeKey(), JSON.stringify(prog)); }catch(e){}
+  }
+
+  // ---- 工具 ----
+  function range(n){ var r=[]; for(var k=0;k<n;k++) r.push(k); return r; }
+  function shuffle(a){ for(var k=a.length-1;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var t=a[k]; a[k]=a[j]; a[j]=t; } return a; }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function W(i){ return LIST.words[i]; }
+  function textOf(i){ return W(i)[1] + ' ' + W(i)[2]; }
+  function catsOf(p){
+    var r=[]; if(p.indexOf('v.')>=0) r.push('v');
+    if(p.indexOf('n.')>=0) r.push('n');
+    if(p.indexOf('adj.')>=0) r.push('adj');
+    return r;
+  }
+  function rec(i){
+    var w = W(i)[0];
+    if(!prog[w]) prog[w] = { lvl:0, due:0, seen:0, ok:0, bad:0 };
+    return prog[w];
+  }
+  function isDue(i){ var r = prog[W(i)[0]]; return !!r && r.due <= Date.now(); }
+  function isNew(i){ return !prog[W(i)[0]]; }
+
+  // ---- 选项生成 ----
+  function buildOptions(idx){
+    var mine = catsOf(W(idx)[1]);
+    var others = range(TOTAL).filter(function(k){ return k !== idx; });
+    var same = others.filter(function(k){
+      var c = catsOf(W(k)[1]);
+      return c.some(function(x){ return mine.indexOf(x) >= 0; });
+    });
+    var pool = shuffle((same.length >= 3) ? same.slice() : others.slice());
+    var picked = pool.slice(0, 3).map(function(k){ return { t: textOf(k), correct:false, src:k }; });
+    if(Math.random() < 0.4){
+      var e = EXTRA[Math.floor(Math.random() * EXTRA.length)];
+      picked[Math.floor(Math.random() * picked.length)] = { t: e[0] + ' ' + e[1], correct:false, src:-1 };
+    }
+    picked.push({ t: textOf(idx), correct:true, src:idx });
+    return shuffle(picked);
+  }
+
+  // ---- 首页 ----
+  function renderHome(){
+    var noList = (Object.keys(LISTS).length === 0);
+    document.body.className = 'on-home' + (noList ? ' no-list' : '');
+    $('cLeft').hidden = $('cOk').hidden = $('cNo').hidden = true;
+    $('prog').style.width = '0%';
+
+    var due = 0, fresh = 0, master = 0;
+    for(var i=0;i<TOTAL;i++){
+      var r = prog[W(i)[0]];
+      if(!r) fresh++;
+      else {
+        if(r.due <= Date.now()) due++;
+        if(r.lvl >= 4) master++;
+      }
+    }
+    $('tDue').textContent = due;
+    $('tNew').textContent = fresh;
+    $('tMaster').textContent = master;
+    $('tTotal').textContent = TOTAL;
+
+    var mixN = due + fresh;
+    $('sMix').textContent = mixN ? '（' + mixN + ' 词：到期 ' + due + ' + 新词 ' + fresh + '）' : '';
+    $('sDue').textContent = due ? '（' + due + ' 词）' : '（现在没有到期的）';
+    $('sAll').textContent = '（' + TOTAL + ' 词）';
+    $('bDue').disabled = (due === 0);
+
+    if(TOTAL === 0){ $('hello').textContent = ''; }
+    else if(mixN === 0){ $('hello').textContent = '今天的复习都清完了。想加练就点「全部打乱」，不然就去休息吧。'; }
+    else if(due > 0){ $('hello').textContent = '有 ' + due + ' 个词到期该复习了，另有 ' + fresh + ' 个还没学过。'; }
+    else { $('hello').textContent = '还没开始学这批词，今天先把 ' + fresh + ' 个新词过一遍吧。'; }
+  }
+
+  // ---- 开始一轮 ----
+  function start(mode){
+    if(TOTAL === 0 || !LIST){ toast('先选一个词书文件，再开始练习'); return; }
+    var due = [], fresh = [], all = range(TOTAL);
+    for(var i=0;i<TOTAL;i++){
+      var r = prog[W(i)[0]];
+      if(!r) fresh.push(i); else if(r.due <= Date.now()) due.push(i);
+    }
+    var picked;
+    if(mode === 'due') picked = shuffle(due.slice());
+    else if(mode === 'new') picked = shuffle(fresh.slice());
+    else if(mode === 'all') picked = shuffle(all.slice());
+    else picked = shuffle(due.concat(fresh));          // mix
+    if(picked.length === 0) picked = shuffle(all.slice());
+
+    queue = picked.slice();
+    qi = 0;
+    wrongCnt = {}; sessOk = {}; sessBad = {}; everBad = {}; answeredWords = {};
+    confirmScheduled = {}; confirmFlag = {};
+    okCount = 0; badCount = 0; firstTryBad = 0; answered = false;
+
+    document.body.className = 'on-quiz';
+    $('cLeft').hidden = $('cOk').hidden = $('cNo').hidden = false;
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    if(qi >= queue.length){ finish(); return; }
+    stopLock();
+    cur = queue[qi];
+    var d = W(cur);
+    $('w').textContent = d[0];
+    $('pos').textContent = d[1];
+
+    var rc = wrongCnt[cur] || 0;
+    var isConfirm = false;
+    if(confirmFlag[cur] > 0){ confirmFlag[cur]--; isConfirm = true; }
+    var rt = $('retry');
+    rt.className = 'retry';
+    if(isConfirm){ rt.hidden = false; rt.textContent = '复查 · 确认会了没'; rt.classList.add('ok'); }
+    else if(rc > 0){ rt.hidden = false; rt.textContent = '重来 ×' + rc; }
+    else rt.hidden = true;
+
+    opts = buildOptions(cur);
+    answered = false;
+    answerState = null;
+    $('note').classList.remove('show');
+    $('note').innerHTML = '';
+    $('req').classList.remove('show');
+    $('req').textContent = '';
+    $('btnNext').hidden = true;
+    $('btnNext').disabled = false;
+    $('btnNext').textContent = '继续 →';
+
+    var html = '';
+    for(var k=0;k<opts.length;k++){
+      html += '<button class="opt" data-k="'+k+'"><span class="num">'+(k+1)+'</span>' +
+              '<span class="txt">'+esc(opts[k].t)+'</span></button>';
+    }
+    $('opts').innerHTML = html;
+    updateStats();
+    updateKeyHints();
+  }
+
+  // ---- 判定与反馈 ----
+  var LOCK_MS = 2000;                 // 答错后要等的时长
+  var lockTimer = null, lockUntil = 0;
+  var answerState = null;             // right / wrong / revealed / guessed
+
+  function correctIndex(){
+    for(var s=0;s<opts.length;s++) if(opts[s].correct) return s;
+    return -1;
+  }
+
+  function stopLock(){
+    if(lockTimer){ clearTimeout(lockTimer); lockTimer = null; }
+    lockUntil = 0;
+    var b = $('btnNext');
+    b.disabled = false;
+    b.classList.remove('locked');
+  }
+
+  function startLock(){
+    var b = $('btnNext');
+    b.hidden = false;
+    b.disabled = true;
+    b.classList.add('locked');
+    lockUntil = Date.now() + LOCK_MS;
+    tickLock();
+  }
+
+  function tickLock(){
+    var b = $('btnNext');
+    var left = Math.ceil((lockUntil - Date.now()) / 1000);
+    if(left > 0){
+      b.textContent = '答错了 · ' + left + ' 秒后可继续';
+      lockTimer = setTimeout(tickLock, 120);
+    } else {
+      b.textContent = '继续 →';
+      b.disabled = false;
+      b.classList.remove('locked');
+      lockTimer = null;
+    }
+  }
+
+  function registerWrong(){
+    badCount++;
+    sessBad[cur] = (sessBad[cur] || 0) + 1;
+    if(!everBad[cur]){ everBad[cur] = true; firstTryBad++; }
+    wrongCnt[cur] = (wrongCnt[cur] || 0) + 1;
+    var gap = GAPS[Math.min(wrongCnt[cur] - 1, GAPS.length - 1)];
+    if(queue.length < TOTAL * 4){
+      queue.splice(Math.min(qi + gap + 1, queue.length), 0, cur);
+      return gap;
+    }
+    return -1;
+  }
+
+  function showReinsert(gap){
+    if(gap >= 0){
+      $('req').textContent = '这个词 ' + gap + ' 题后会再出现一次';
+    } else {
+      $('req').textContent = '这个词本轮已经错太多次，不再插回，算进今日待复习';
+    }
+    $('req').classList.add('show');
+  }
+
+  function paintOptions(k){
+    var btns = $('opts').querySelectorAll('.opt');
+    var ci = correctIndex();
+    for(var b=0;b<btns.length;b++){
+      btns[b].disabled = true;
+      var bi = parseInt(btns[b].getAttribute('data-k'), 10);
+      if(bi === ci) btns[b].classList.add('correct');
+      else if(bi === k) btns[b].classList.add('wrong');
+      else btns[b].classList.add('dim');
+    }
+  }
+
+  function noteHTML(chosen){
+    var d = W(cur);
+    var html = '';
+    if(chosen >= 0){
+      var o = opts[chosen];
+      html += '<div class="chosen"><b>你选的：</b>' + esc(o.t) +
+              (o.src >= 0
+                ? '　<span class="from">（其实是 ' + esc(W(o.src)[0]) + ' 的意思）</span>'
+                : '　<span class="from">（这个词库里没有它，纯干扰项）</span>') +
+              '</div>';
+    }
+    html += '<b>' + esc(d[0]) + '</b> ' + esc(d[1]) + ' &nbsp;·&nbsp; ' + esc(d[2]) +
+            '<br><span style="opacity:.8">' + esc(d[3]) + '</span>';
+    return html;
+  }
+
+  function settle(right, k, mode){
+    answered = true;
+    answeredWords[cur] = true;
+
+    var notices = [];
+
+    if(right){
+      okCount++;
+      sessOk[cur] = (sessOk[cur] || 0) + 1;
+      answerState = 'right';
+      paintOptions(k);
+      $('note').innerHTML = noteHTML(-1);
+      // 答对不代表真会了：隔几题再考一次确认
+      if(!confirmScheduled[cur] && queue.length < TOTAL * 3){
+        confirmScheduled[cur] = true;
+        confirmFlag[cur] = (confirmFlag[cur] || 0) + 1;
+        queue.splice(Math.min(qi + CONFIRM_GAP + 1, queue.length), 0, cur);
+        notices.push('答对了，' + CONFIRM_GAP + ' 题后再考一次确认');
+      }
+    } else {
+      var gap = registerWrong();
+      answerState = (mode === 'reveal') ? 'revealed' : 'wrong';
+      paintOptions(k);
+      $('note').innerHTML = noteHTML(k);
+      if(gap >= 0) notices.push('这个词 ' + gap + ' 题后会再出现');
+      else notices.push('这个词本轮已经错太多次，不再插回，算进今日待复习');
+    }
+
+    if(notices.length){
+      $('req').textContent = notices.join('；');
+      $('req').classList.add('show');
+    }
+
+    $('note').classList.add('show');
+    $('btnNext').hidden = false;
+    if(right){
+      $('btnNext').disabled = false;
+      $('btnNext').textContent = '继续 →';
+    } else {
+      startLock();
+    }
+    try{ $('btnNext').focus({ preventScroll:true }); }catch(e){}
+    updateStats();
+    updateKeyHints();
+  }
+
+  function answer(k){
+    if(answered || k < 0 || k >= opts.length) return;
+    settle(k === correctIndex(), k, 'pick');
+  }
+
+  function revealAnswer(){
+    if(answered) return;
+    settle(false, -1, 'reveal');
+  }
+
+  // 答对之后按 ← ：承认是蒙的，改判为答错
+  function markAsGuess(){
+    if(!answered || answerState !== 'right') return;
+    okCount--;
+    sessOk[cur] = Math.max(0, (sessOk[cur] || 0) - 1);
+    var gap = registerWrong();
+    answerState = 'guessed';
+
+    var btns = $('opts').querySelectorAll('.opt');
+    for(var b=0;b<btns.length;b++){
+      btns[b].classList.remove('correct');
+      btns[b].classList.add('dim');
+    }
+    $('note').classList.remove('show');
+    $('note').innerHTML = '<div class="chosen"><b>按了 ←：</b>算你蒙的，这个词改判为答错。' +
+                          '<span class="from">（趁现在还没忘，记牢它）</span></div>' + noteHTML(-1);
+    $('note').classList.add('show');
+    showReinsert(gap);
+    $('btnNext').hidden = false;
+    startLock();
+    updateStats();
+    updateKeyHints();
+  }
+
+  function next(){
+    if(!answered || $('btnNext').disabled) return;
+    stopLock();
+    qi++;
+    renderQuestion();
+  }
+
+  function updateStats(){
+    var left = queue.length - qi;
+    $('cLeft').textContent = '剩 ' + left;
+    $('cOk').textContent = '✓ ' + okCount;
+    $('cNo').textContent = '✕ ' + badCount;
+    var total = queue.length;
+    $('prog').style.width = (total ? (qi / total * 100) : 0) + '%';
+  }
+
+  // ---- 结算 + 写入 SRS ----
+  function finish(){
+    var now = Date.now();
+    var idxs = Object.keys(answeredWords).map(Number);
+    var ups = 0, downs = 0;
+
+    for(var k=0;k<idxs.length;k++){
+      var i = idxs[k];
+      var r = rec(i);
+      r.seen = (r.seen || 0) + 1;
+      r.ok = (r.ok || 0) + (sessOk[i] || 0);
+      r.bad = (r.bad || 0) + (sessBad[i] || 0);
+      r.ts = now;
+      if(sessBad[i]){
+        // 掉档：退回到上一档，下一次隔得更近
+        if(r.lvl > 0) downs++;
+        r.lvl = Math.max(0, (r.lvl || 0) - 1);
+        r.due = now + INT[r.lvl] * DAY;
+      } else {
+        // 升级：本次按当前档位安排下次，然后档位上移一档
+        ups++;
+        var lv = Math.min(INT.length - 1, r.lvl || 0);
+        r.due = now + INT[lv] * DAY;
+        r.lvl = Math.min(INT.length - 1, lv + 1);
+      }
+    }
+    saveProg();
+
+    document.body.className = 'on-done';
+    var totalQ = okCount + badCount;
+    $('sOk').textContent = okCount;
+    $('sNo').textContent = badCount;
+    $('sRate').textContent = (totalQ ? Math.round((totalQ - firstTryBad) / totalQ * 100) : 0) + '%';
+
+    var t, txt;
+    if(firstTryBad === 0){ t = '一次全对'; txt = '这一轮没有词掉档，间隔会顺利往前走。'; }
+    else if(firstTryBad <= 5){ t = '就差一点点'; txt = '有 ' + firstTryBad + ' 个词没一次答对，它们的间隔退回 1 天了。'; }
+    else { t = '这批还不牢'; txt = firstTryBad + ' 个词掉档了。别急着今晚补，明天再来一次效果更好。'; }
+    $('sumTitle').textContent = t;
+    $('sumText').textContent = txt;
+
+    var dueCount = 0;
+    for(var q=0;q<TOTAL;q++){ var rr = prog[W(q)[0]]; if(rr && rr.due <= Date.now()) dueCount++; }
+    $('nextDue').innerHTML =
+      '本轮碰到 <b>' + idxs.length + '</b> 个词 · 间隔<b>上调 ' + ups + ' 个</b>、<b>退回 ' + downs + ' 个</b>' +
+      '<br>明天到期：<b>' + dueCount + '</b> 个' +
+      '<br><span style="opacity:.75">提示：当天猛刷只能提升「当下熟练度」，跨天的间隔复习才是真正把它推进到长期记忆里的办法。</span>';
+
+    $('bAgain').hidden = (Object.keys(sessBad).length === 0);
+    $('prog').style.width = '100%';
+  }
+
+  // ---- 事件 ----
+  $('opts').addEventListener('click', function(e){
+    var btn = e.target.closest ? e.target.closest('.opt') : null;
+    if(!btn) return;
+    answer(parseInt(btn.getAttribute('data-k'), 10));
+  });
+
+  $('btnNext').addEventListener('click', next);
+  $('bMix').addEventListener('click', function(){ start('mix'); });
+  $('bDue').addEventListener('click', function(){ start('due'); });
+  $('bAll').addEventListener('click', function(){ start('all'); });
+  $('btnQuit').addEventListener('click', function(){ finish(); });
+  $('bAgain').addEventListener('click', function(){
+    var bad = Object.keys(sessBad).map(Number);
+    if(!bad.length) return;
+    queue = shuffle(bad.slice()); qi = 0;
+    wrongCnt = {}; sessOk = {}; sessBad = {}; everBad = {}; answeredWords = {};
+    confirmScheduled = {}; confirmFlag = {};
+    okCount = 0; badCount = 0; firstTryBad = 0; answered = false;
+    document.body.className = 'on-quiz';
+    renderQuestion();
+  });
+  $('bHome').addEventListener('click', function(){ renderHome(); });
+  $('bReset').addEventListener('click', function(){
+    if(!window.confirm('确定清空浏览器里记录的本轮进度？\n\n注意：如果进度已经存进词书文件末尾，清空后重新加载会被它读回来——要彻底清掉，得同时删掉词表里的那段快照。')) return;
+    prog = {};
+    try{ localStorage.removeItem(storeKey()); }catch(e){}
+    renderHome();
+  });
+
+  // ================= Material You 动态取色 =================
+  var SEED_KEY = 'satvocab.seed';
+  var DEFAULT_SEED = '#3f6653';
+  var SEED_PRESETS = ['#3f6653', '#41578f', '#8a4f6d', '#a35a34', '#6b6a2e', '#5f4b8b'];
+  var SEED = DEFAULT_SEED;
+
+  function normalizeHex(x){
+    x = String(x || '').trim();
+    if(x.charAt(0) !== '#') x = '#' + x;
+    if(!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(x)) return null;
+    if(x.length === 4) x = '#' + x[1]+x[1]+x[2]+x[2]+x[3]+x[3];
+    return x.toLowerCase();
+  }
+  function hex2rgb(h){
+    h = normalizeHex(h);
+    if(!h) return null;
+    var n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function rgb2hex(r, g, b){
+    function p(v){ v = Math.max(0, Math.min(255, Math.round(v))); return (v < 16 ? '0' : '') + v.toString(16); }
+    return '#' + p(r) + p(g) + p(b);
+  }
+  function srgb2lin(c){
+    c = c / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+  // sRGB → OKLab（用于求种子色的色相与彩度）
+  function rgbToOklab(r, g, b){
+    var R = srgb2lin(r), G = srgb2lin(g), B = srgb2lin(b);
+    var l = Math.cbrt(0.4122214708*R + 0.5363325363*G + 0.0514459929*B);
+    var m = Math.cbrt(0.2119034982*R + 0.6806995451*G + 0.1073969566*B);
+    var s2 = Math.cbrt(0.0883024619*R + 0.2817188376*G + 0.6299787005*B);
+    return {
+      L: 0.2104542553*l + 0.7936177850*m - 0.0040720468*s2,
+      a: 1.9779984951*l - 2.4285922050*m + 0.4505937099*s2,
+      b: 0.0259040371*l + 0.7827717662*m - 0.8086757660*s2
+    };
+  }
+  // Material 的 tone（L* 0–100）换算成 OKLCH 亮度
+  function toneL(t){
+    var y = (t <= 8) ? (t / 903.3) : Math.pow((t + 16) / 116, 3);
+    return Math.cbrt(y);
+  }
+  function chromaAt(t, c){
+    var x = Math.abs(t - 50) / 50;                 // 0 中间 → 1 两端
+    return c * Math.max(0.12, 1 - 0.62 * Math.pow(x, 1.5));
+  }
+  function paletteFor(h, c){
+    return function(t){
+      return 'oklch(' + toneL(t).toFixed(4) + ' ' + chromaAt(t, c).toFixed(4) + ' ' + h.toFixed(2) + ')';
+    };
+  }
+
+  function oklchSupported(){
+    try{ return !!(window.CSS && window.CSS.supports && window.CSS.supports('color', 'oklch(0.5 0.1 200)')); }
+    catch(e){ return false; }
+  }
+  function prefersDark(){
+    try{ return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); }
+    catch(e){ return false; }
+  }
+
+  function applySeed(hex){
+    if(!oklchSupported()) return false;
+    var rgb = hex2rgb(hex);
+    if(!rgb) return false;
+    var lab = rgbToOklab(rgb[0], rgb[1], rgb[2]);
+    var c0 = Math.sqrt(lab.a * lab.a + lab.b * lab.b);
+    var h0 = Math.atan2(lab.b, lab.a) * 180 / Math.PI;
+    if(h0 < 0) h0 += 360;
+
+    var P = paletteFor(h0, Math.max(0.05, Math.min(c0, 0.22)));      // 主色板
+    var N = paletteFor(h0, Math.min(0.012 + c0 * 0.12, 0.03));       // 中性板（带一点种子色）
+    var E = paletteFor(25, 0.16);                                    // 错误红
+    var G = paletteFor(150, 0.13);                                   // 成功绿
+
+    var v = prefersDark()
+      ? { '--bg': N(6), '--surface': N(10), '--surface-2': N(19), '--surface-3': N(25),
+          '--text': N(92), '--text-2': N(72), '--line': N(28),
+          '--primary': P(80), '--primary-c': P(20), '--primary-soft': P(30),
+          '--good': G(80), '--good-soft': G(22), '--good-line': G(45),
+          '--bad': E(80), '--bad-soft': E(28), '--bad-line': E(52) }
+      : { '--bg': N(96), '--surface': N(99), '--surface-2': N(92), '--surface-3': N(88),
+          '--text': N(12), '--text-2': N(38), '--line': N(84),
+          '--primary': P(40), '--primary-c': P(100), '--primary-soft': P(90),
+          '--good': G(36), '--good-soft': G(90), '--good-line': G(72),
+          '--bad': E(42), '--bad-soft': E(92), '--bad-line': E(78) };
+
+    var root = document.documentElement;
+    for(var k in v){ if(Object.prototype.hasOwnProperty.call(v, k)) root.style.setProperty(k, v[k]); }
+    return true;
+  }
+
+  function markSwatch(){
+    var box = $('swatches');
+    if(!box) return;
+    var kids = box.querySelectorAll('.swatch');
+    for(var i=0;i<kids.length;i++){
+      var c = kids[i].getAttribute('data-c');
+      if(c && c.toLowerCase() === SEED) kids[i].classList.add('on');
+      else kids[i].classList.remove('on');
+    }
+  }
+
+  function setSeed(hex, silent){
+    var h = normalizeHex(hex);
+    if(!h){ if(!silent) toast('色值格式不对，比如 #3f6653'); return false; }
+    SEED = h;
+    try{ localStorage.setItem(SEED_KEY, h); }catch(e){}
+    if($('seedColor')) $('seedColor').value = h;
+    if($('seedHex')) $('seedHex').value = h;
+    var ok = applySeed(h);
+    markSwatch();
+    if(!silent) toast(ok ? '配色已按 ' + h + ' 重新生成' : '这个浏览器不支持 oklch 动态配色，保留默认色');
+    return ok;
+  }
+
+  function loadSeed(){
+    var h = null;
+    try{ h = localStorage.getItem(SEED_KEY); }catch(e){}
+    var n = normalizeHex(h);
+    if(!n) n = DEFAULT_SEED;
+    SEED = n;
+    if($('seedColor')) $('seedColor').value = n;
+    if($('seedHex')) $('seedHex').value = n;
+    applySeed(n);
+    markSwatch();
+  }
+
+  function paintSwatches(){
+    var box = $('swatches');
+    if(!box) return;
+    var html = '';
+    for(var i=0;i<SEED_PRESETS.length;i++){
+      html += '<button class="swatch" data-c="' + SEED_PRESETS[i] + '" style="background:' + SEED_PRESETS[i] + '" aria-label="' + SEED_PRESETS[i] + '"></button>';
+    }
+    box.innerHTML = html;
+    markSwatch();
+  }
+
+  // 从图片里取主色：排除近白/近黑/灰，按「出现次数 × 鲜艳度」打分
+  function extractSeedFromImage(file){
+    var url, img = new Image();
+    try{ url = URL.createObjectURL(file); }catch(e){ toast('无法读取这张图片'); return; }
+    img.onload = function(){
+      try{
+        var S = 64, cv = document.createElement('canvas');
+        cv.width = S; cv.height = S;
+        var ctx = cv.getContext('2d');
+        ctx.drawImage(img, 0, 0, S, S);
+        var data = ctx.getImageData(0, 0, S, S).data;
+        var buckets = {}, best = null, bestScore = -1;
+        for(var i=0;i<data.length;i+=4){
+          if(data[i+3] < 128) continue;
+          var lab = rgbToOklab(data[i], data[i+1], data[i+2]);
+          if(lab.L < 0.18 || lab.L > 0.92) continue;
+          var c = Math.sqrt(lab.a*lab.a + lab.b*lab.b);
+          if(c < 0.03) continue;
+          var key = ((data[i] >> 4) << 8) | ((data[i+1] >> 4) << 4) | (data[i+2] >> 4);
+          var bk = buckets[key] || (buckets[key] = { r:0, g:0, b:0, n:0 });
+          bk.r += data[i]; bk.g += data[i+1]; bk.b += data[i+2]; bk.n++;
+        }
+        for(var k in buckets){
+          if(!Object.prototype.hasOwnProperty.call(buckets, k)) continue;
+          var b2 = buckets[k];
+          var l2 = rgbToOklab(b2.r/b2.n, b2.g/b2.n, b2.b/b2.n);
+          var c2 = Math.sqrt(l2.a*l2.a + l2.b*l2.b);
+          var score = b2.n * (0.4 + Math.min(c2, 0.25));
+          if(score > bestScore){ bestScore = score; best = b2; }
+        }
+        if(!best){ toast('这张图里没找到适合当种子的颜色'); return; }
+        var hex = rgb2hex(best.r/best.n, best.g/best.n, best.b/best.n);
+        setSeed(hex);
+      }catch(err){ toast('取色失败：' + (err && err.message ? err.message : '图片可能跨域')); }
+      try{ URL.revokeObjectURL(url); }catch(e){}
+    };
+    img.onerror = function(){ toast('图片读取失败'); };
+    img.src = url;
+  }
+
+  // ---- 配色面板交互 ----
+  if($('bTheme')) $('bTheme').addEventListener('click', function(){
+    var box = $('themeBox');
+    box.hidden = !box.hidden;
+    if(!box.hidden && $('exportBox')) $('exportBox').hidden = true;
+  });
+  if($('bThemeClose')) $('bThemeClose').addEventListener('click', function(){ $('themeBox').hidden = true; });
+  if($('seedColor')) $('seedColor').addEventListener('input', function(){ setSeed(this.value, true); });
+  if($('seedHex')) $('seedHex').addEventListener('change', function(){
+    var ok = setSeed(this.value, true);
+    if(!ok) this.value = SEED;
+  });
+  if($('swatches')) $('swatches').addEventListener('click', function(e){
+    var t = e.target;
+    if(t && t.getAttribute && t.getAttribute('data-c')) setSeed(t.getAttribute('data-c'));
+  });
+  if($('bSeedImg')) $('bSeedImg').addEventListener('click', function(){ $('seedImgInput').click(); });
+  if($('seedImgInput')) $('seedImgInput').addEventListener('change', function(){
+    var f = this.files && this.files[0];
+    if(f) extractSeedFromImage(f);
+    this.value = '';
+  });
+  if($('bSeedReset')) $('bSeedReset').addEventListener('click', function(){ setSeed(DEFAULT_SEED); });
+  if($('bLoad2')) $('bLoad2').addEventListener('click', function(){ $('fileInput').click(); });
+
+  // ---- 提示条 ----
+  var toastTimer = null;
+  function toast(msg){
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+  }
+
+  // ---- 键位提示（跟着状态变） ----
+  function updateKeyHints(){
+    var el = $('keys');
+    if(!el) return;
+    if(!answered){
+      el.innerHTML = '<span><kbd>1</kbd>–<kbd>4</kbd> 选释义</span>' +
+                     '<span class="warn"><kbd>←</kbd> 不认识（看答案，记错）</span>';
+    } else if(answerState === 'right'){
+      el.innerHTML = '<span class="warn"><kbd>←</kbd> 其实是蒙的</span>' +
+                     '<span class="go"><kbd>→</kbd> 继续</span>';
+    } else {
+      el.innerHTML = '<span class="go"><kbd>→</kbd> 继续（2 秒后）</span>';
+    }
+  }
+
+  // ---- 生成完整词书文件（含进度快照） ----
+  function buildWordsFile(){
+    function q(x){ return JSON.stringify(String(x)); }
+    var out = [];
+    out.push('/* ===== SAT 词汇词库 ===== */');
+    out.push('/* 由页面自动生成，格式与手写版一致，可直接用编辑器改 */');
+    out.push('');
+    out.push('window.VOCAB_LISTS = {');
+    var ids = Object.keys(LISTS);
+    for(var a=0;a<ids.length;a++){
+      var id = ids[a], L = LISTS[id];
+      out.push('  ' + q(id) + ': {');
+      out.push('    title: ' + q(L.title || id) + ',');
+      out.push('    words: [');
+      var ws = L.words || [];
+      for(var b=0;b<ws.length;b++){
+        var row = ws[b].map(function(x){ return JSON.stringify(String(x)); }).join(', ');
+        out.push('      [' + row + ']' + (b < ws.length - 1 ? ',' : ''));
+      }
+      out.push('    ]');
+      out.push('  }' + (a < ids.length - 1 ? ',' : ''));
+    }
+    out.push('};');
+    out.push('');
+    out.push('/* ===== 进度快照 ===== */');
+    out.push('window.VOCAB_PROGRESS = window.VOCAB_PROGRESS || {};');
+    var snap = {};
+    var old = window.VOCAB_PROGRESS || {};
+    for(var k in old){ if(Object.prototype.hasOwnProperty.call(old, k)) snap[k] = old[k]; }
+    var mine = {};
+    for(var w in prog){ if(Object.prototype.hasOwnProperty.call(prog, w)) mine[w] = prog[w]; }
+    snap[listId] = mine;
+    var ks = Object.keys(snap);
+    for(var c=0;c<ks.length;c++){
+      out.push('window.VOCAB_PROGRESS[' + q(ks[c]) + '] = ' + JSON.stringify(snap[ks[c]]) + ';');
+    }
+    out.push('');
+    return out.join('\n');
+  }
+
+  function downloadWordsFile(text){
+    try{
+      var blob = new Blob([text], { type:'text/javascript;charset=utf-8' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = loadedFileName || 'words.js';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){
+        URL.revokeObjectURL(a.href);
+        if(a.parentNode) a.parentNode.removeChild(a);
+      }, 3000);
+      toast('已下载 ' + (loadedFileName || 'words.js') + '，覆盖到 lists/ 里即可');
+    }catch(e){ toast('下载失败，请用「复制进度文本」'); }
+  }
+
+  // 真·一键：优先直接写回原文件（Chrome / Edge）
+  function saveProgressToFile(){
+    var text = buildWordsFile();
+    if(window.showSaveFilePicker){
+      window.showSaveFilePicker({
+        suggestedName: loadedFileName || 'words.js',
+        types: [{ description: '词库文件', accept: { 'text/javascript': ['.js'] } }]
+      }).then(function(handle){
+        return handle.createWritable().then(function(w){
+          return w.write(text).then(function(){ return w.close(); });
+        });
+      }).then(function(){
+        toast('已写入 ' + (loadedFileName || '词书') + ' ✓ 进度存进去了');
+      }).catch(function(err){
+        if(err && err.name === 'AbortError') return;   // 用户取消
+        downloadWordsFile(text);
+      });
+    } else {
+      downloadWordsFile(text);
+    }
+  }
+
+  $('bSave').addEventListener('click', saveProgressToFile);
+  $('bSave2').addEventListener('click', saveProgressToFile);
+
+  // ---- 备用：复制进度文本 ----
+  function buildProgressSnippet(){
+    var snap = {};
+    for(var w in prog){ if(Object.prototype.hasOwnProperty.call(prog, w)) snap[w] = prog[w]; }
+    return '/* ===== 进度快照（粘贴到词书文件末尾） ===== */\n' +
+           'window.VOCAB_PROGRESS = window.VOCAB_PROGRESS || {};\n' +
+           'window.VOCAB_PROGRESS[' + JSON.stringify(listId) + '] = ' + JSON.stringify(snap) + ';\n';
+  }
+
+  $('bExport').addEventListener('click', function(){
+    var ta = $('exportText');
+    ta.value = buildProgressSnippet();
+    $('exportBox').hidden = false;
+    ta.focus();
+    ta.select();
+  });
+
+  $('bCopy').addEventListener('click', function(){
+    var ta = $('exportText'), done = false;
+    ta.select();
+    try{ done = document.execCommand('copy'); }catch(e){ done = false; }
+    if(!done && navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).catch(function(){});
+    }
+    $('bCopy').textContent = '已复制 ✓';
+    setTimeout(function(){ $('bCopy').textContent = '复制'; }, 1600);
+  });
+
+  $('bClose').addEventListener('click', function(){ $('exportBox').hidden = true; });
+
+  // ---- 选择本地词书文件 ----
+  function refreshListSelect(){
+    var ids = Object.keys(LISTS);
+    var sel = $('listSel');
+    if(ids.length <= 1){ sel.hidden = true; sel.innerHTML = ''; return; }
+    var html = '';
+    for(var i=0;i<ids.length;i++){
+      html += '<option value="' + esc(ids[i]) + '">' + esc(LISTS[ids[i]].title || ids[i]) + '</option>';
+    }
+    sel.innerHTML = html;
+    sel.hidden = false;
+    sel.value = listId;
+  }
+
+  $('bLoad').addEventListener('click', function(){ $('fileInput').click(); });
+
+  $('fileInput').addEventListener('change', function(){
+    var file = this.files && this.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var sandbox = {};
+        new Function('window', String(reader.result))(sandbox);
+        var got = sandbox.VOCAB_LISTS;
+        if(!got || typeof got !== 'object' || Object.keys(got).length === 0){
+          throw new Error('文件里没有找到 window.VOCAB_LISTS');
+        }
+        for(var id in got){
+          if(Object.prototype.hasOwnProperty.call(got, id)) LISTS[id] = got[id];
+        }
+        if(sandbox.VOCAB_PROGRESS && typeof sandbox.VOCAB_PROGRESS === 'object'){
+          var base = window.VOCAB_PROGRESS || {};
+          for(var pid in sandbox.VOCAB_PROGRESS){
+            if(!Object.prototype.hasOwnProperty.call(sandbox.VOCAB_PROGRESS, pid)) continue;
+            var cur = base[pid] || {}, inc = sandbox.VOCAB_PROGRESS[pid];
+            for(var w in inc){
+              if(!Object.prototype.hasOwnProperty.call(inc, w)) continue;
+              if(!cur[w] || (inc[w].ts || 0) >= (cur[w].ts || 0)) cur[w] = inc[w];
+            }
+            base[pid] = cur;
+          }
+          window.VOCAB_PROGRESS = base;
+        }
+        loadedFileName = file.name || null;
+        var firstNew = Object.keys(got)[0];
+        listId = firstNew;
+        initList();
+        refreshListSelect();
+        renderHome();
+        toast('已载入词书：' + (LISTS[listId].title || listId));
+      }catch(err){
+        toast('读取失败：' + (err && err.message ? err.message : '文件格式不对'));
+      }
+    };
+    reader.onerror = function(){ toast('文件读取失败'); };
+    reader.readAsText(file, 'utf-8');
+    this.value = '';   // 允许重复选同一个文件
+  });
+
+  document.addEventListener('keydown', function(e){
+    var mode = document.body.className;
+    if(mode === 'on-home' || mode === 'on-done') return;
+    var k = e.key;
+
+    if(k >= '1' && k <= '4'){ e.preventDefault(); answer(parseInt(k, 10) - 1); return; }
+
+    if(k === 'ArrowLeft' || k === 'f' || k === 'F'){
+      e.preventDefault();
+      if(!answered) revealAnswer();                 // 没作答 → 不认识，记为错
+      else if(answerState === 'right') markAsGuess(); // 已答对 → 承认是蒙的，改判错
+      return;
+    }
+
+    if(k === 'ArrowRight' || k === 'j' || k === 'J' || k === ' ' || k === 'Enter'){
+      e.preventDefault();
+      if(answered && !$('btnNext').disabled) next();
+    }
+  });
+
+  $('listSel').addEventListener('change', function(){
+    listId = this.value;
+    initList();
+    renderHome();
+  });
+
+  // ---- 启动 ----
+  function initList(){
+    LIST = LISTS[listId];
+    TOTAL = LIST ? LIST.words.length : 0;
+    $('title').textContent = LIST ? LIST.title : '词汇复习';
+    loadProg();
+  }
+
+  (function boot(){
+    paintSwatches();
+    loadSeed();
+    try{
+      if(window.matchMedia){
+        var mq = window.matchMedia('(prefers-color-scheme: dark)');
+        var onChange = function(){ applySeed(SEED); markSwatch(); };
+        if(mq.addEventListener) mq.addEventListener('change', onChange);
+        else if(mq.addListener) mq.addListener(onChange);
+      }
+    }catch(e){}
+
+    var ids = Object.keys(LISTS);
+    if(ids.length === 0){
+      // 默认不加载任何词库：停在空状态，等用户自己选文件
+      listId = null;
+      $('title').textContent = '词汇复习';
+      renderHome();
+      return;
+    }
+    var sel = $('listSel');
+    var want = null;
+    try{
+      var m = location.search.match(/[?&]list=([^&]+)/);
+      if(m) want = decodeURIComponent(m[1]);
+    }catch(e){}
+    listId = (want && LISTS[want]) ? want : ids[0];
+    refreshListSelect();
+    initList();
+    renderHome();
+    if(!STORAGE_OK){
+      var box = document.getElementById('hello');
+      if(box) box.insertAdjacentHTML('afterend',
+        '<div class="warnbox">⚠️ 这个浏览器不允许本地存储（常见于 Safari 直接打开本地文件），' +
+        '进度只在本页有效。练完请立刻点「💾 一键保存进度到词书」，否则关掉页面就没了。</div>');
+    }
+  })();
+})();
+</script>
+</body>
+</html>
