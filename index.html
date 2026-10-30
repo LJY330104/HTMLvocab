@@ -228,6 +228,7 @@ body.no-list .hint{display:none}
       <p class="empty-t">还没有载入词书</p>
       <p class="empty-s">选一个 .js 词书文件开始。<br>只在本地读取，不会上传任何内容。</p>
       <button class="primary" id="bLoad2">选择词书文件</button>
+      <button class="linkbtn" id="bTest0">⬇ 还没有词书？先下载测试词表（10 词）</button>
     </div>
 
     <div class="loaded-only">
@@ -244,6 +245,7 @@ body.no-list .hint{display:none}
       <button id="bSave">💾 一键保存进度到词书</button>
       <button id="bLoad">📂 选择本地词书文件（.js）</button>
       <input type="file" id="fileInput" accept=".js,.json,.txt,text/javascript,application/javascript" hidden>
+      <button class="linkbtn" id="bTest1">⬇ 下载测试词表（10 词 · 六年级）</button>
       <button class="linkbtn" id="bExport">复制进度文本（手动粘贴用）</button>
       <button class="linkbtn" id="bReset">清空我这本词库的进度</button>
     </div>
@@ -704,6 +706,45 @@ body.no-list .hint{display:none}
     updateKeyHints();
   }
 
+  // 答错之后按 ← ：算手滑，撤销这次判定，同一题重新答一遍
+  function undoWrong(){
+    if(!answered) return;
+    if(answerState !== 'wrong' && answerState !== 'revealed') return;
+
+    badCount = Math.max(0, badCount - 1);
+    sessBad[cur] = (sessBad[cur] || 0) - 1;
+    if(sessBad[cur] <= 0) delete sessBad[cur];
+    wrongCnt[cur] = (wrongCnt[cur] || 0) - 1;
+    if(wrongCnt[cur] <= 0){
+      delete wrongCnt[cur];
+      if(everBad[cur]){ delete everBad[cur]; firstTryBad = Math.max(0, firstTryBad - 1); }
+    }
+    // 撤掉刚才插回队列的那一道
+    for(var i=qi+1;i<queue.length;i++){
+      if(queue[i] === cur){ queue.splice(i, 1); break; }
+    }
+
+    // 选项原样恢复，不重新抽干扰项
+    var html = '';
+    for(var k=0;k<opts.length;k++){
+      html += '<button class="opt" data-k="'+k+'"><span class="num">'+(k+1)+'</span>' +
+              '<span class="txt">'+esc(opts[k].t)+'</span></button>';
+    }
+    $('opts').innerHTML = html;
+
+    answered = false;
+    answerState = null;
+    stopLock();
+    $('note').classList.remove('show');
+    $('note').innerHTML = '';
+    $('req').classList.remove('show');
+    $('req').textContent = '';
+    $('btnNext').hidden = true;
+    $('btnNext').textContent = '继续 →';
+    updateStats();
+    updateKeyHints();
+  }
+
   function next(){
     if(!answered || $('btnNext').disabled) return;
     stopLock();
@@ -1028,8 +1069,11 @@ body.no-list .hint{display:none}
     } else if(answerState === 'right'){
       el.innerHTML = '<span class="warn"><kbd>←</kbd> 其实是蒙的</span>' +
                      '<span class="go"><kbd>→</kbd> 继续</span>';
-    } else {
+    } else if(answerState === 'guessed'){
       el.innerHTML = '<span class="go"><kbd>→</kbd> 继续（2 秒后）</span>';
+    } else {
+      el.innerHTML = '<span class="warn"><kbd>←</kbd> 手滑了，撤销重答</span>' +
+                     '<span class="go"><kbd>→</kbd> 继续（2 秒后）</span>';
     }
   }
 
@@ -1073,19 +1117,20 @@ body.no-list .hint{display:none}
     return out.join('\n');
   }
 
-  function downloadWordsFile(text){
+  function downloadWordsFile(text, name, note){
+    name = name || loadedFileName || 'words.js';
     try{
       var blob = new Blob([text], { type:'text/javascript;charset=utf-8' });
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = loadedFileName || 'words.js';
+      a.download = name;
       document.body.appendChild(a);
       a.click();
       setTimeout(function(){
         URL.revokeObjectURL(a.href);
         if(a.parentNode) a.parentNode.removeChild(a);
       }, 3000);
-      toast('已下载 ' + (loadedFileName || 'words.js') + '，覆盖到 lists/ 里即可');
+      toast(note || ('已下载 ' + name + '，覆盖到 lists/ 里即可'));
     }catch(e){ toast('下载失败，请用「复制进度文本」'); }
   }
 
@@ -1113,6 +1158,70 @@ body.no-list .hint{display:none}
 
   $('bSave').addEventListener('click', saveProgressToFile);
   $('bSave2').addEventListener('click', saveProgressToFile);
+
+  // ---- 内置测试词表：一键下载成 .js 词书 ----
+  var TEST_BANK = {
+    id: 'test',
+    title: '测试词表（10 词 · 六年级）',
+    words: [
+      ['borrow', 'v.', '借（入），借用', 'borrow a book from the library 从图书馆借书；borrow 借入 / lend 借出'],
+      ['discover', 'v.', '发现，发觉', 'discover a new planet 发现一颗新行星'],
+      ['refuse', 'v.', '拒绝，不愿', 'refuse to do sth 拒绝做某事；与 accept 相对'],
+      ['prepare', 'v.', '准备，预备', 'prepare for the exam 为考试做准备'],
+      ['journey', 'n.', '旅程，旅行（多指陆路长途）', 'a long journey 一段长途旅行'],
+      ['weather', 'n.', '天气', "What's the weather like today? 今天天气怎么样"],
+      ['curious', 'adj.', '好奇的；奇怪的', 'be curious about sth 对某事好奇'],
+      ['honest', 'adj.', '诚实的，正直的', 'to be honest 说实话'],
+      ['gentle', 'adj.', '温和的，轻柔的', 'a gentle voice 温柔的嗓音'],
+      ['brave', 'adj.', '勇敢的，无畏的', 'be brave enough to do sth 敢于做某事']
+    ]
+  };
+
+  function buildTestBankFile(){
+    var out = [];
+    out.push('/* ===== 测试词表（10 词 · 六年级难度） ===== */');
+    out.push('/* 由页面一键下载得到；在首页「选择本地词书文件」里选它就能练 */');
+    out.push('/* 也可以当新词书的模板：照着改 id / title / words */');
+    out.push('');
+    out.push('window.VOCAB_LISTS = {');
+    out.push('  ' + JSON.stringify(TEST_BANK.id) + ': {');
+    out.push('    title: ' + JSON.stringify(TEST_BANK.title) + ',');
+    out.push('    words: [');
+    var ws = TEST_BANK.words;
+    for(var i=0;i<ws.length;i++){
+      var row = ws[i].map(function(x){ return JSON.stringify(String(x)); }).join(', ');
+      out.push('      [' + row + ']' + (i < ws.length - 1 ? ',' : ''));
+    }
+    out.push('    ]');
+    out.push('  }');
+    out.push('};');
+    out.push('');
+    return out.join('\n');
+  }
+
+  function downloadTestBank(){
+    var text = buildTestBankFile();
+    var done = '测试词表已保存 ✓ 再用「选择本地词书文件」把它载进来';
+    if(window.showSaveFilePicker){
+      window.showSaveFilePicker({
+        suggestedName: 'test.js',
+        types: [{ description: '词库文件', accept: { 'text/javascript': ['.js'] } }]
+      }).then(function(handle){
+        return handle.createWritable().then(function(w){
+          return w.write(text).then(function(){ return w.close(); });
+        });
+      }).then(function(){ toast(done); })
+        .catch(function(err){
+          if(err && err.name === 'AbortError') return;
+          downloadWordsFile(text, 'test.js', done);
+        });
+    } else {
+      downloadWordsFile(text, 'test.js', done);
+    }
+  }
+
+  $('bTest0').addEventListener('click', downloadTestBank);
+  $('bTest1').addEventListener('click', downloadTestBank);
 
   // ---- 备用：复制进度文本 ----
   function buildProgressSnippet(){
@@ -1215,6 +1324,7 @@ body.no-list .hint{display:none}
       e.preventDefault();
       if(!answered) revealAnswer();                 // 没作答 → 不认识，记为错
       else if(answerState === 'right') markAsGuess(); // 已答对 → 承认是蒙的，改判错
+      else undoWrong();                             // 已答错 → 手滑，撤销重答
       return;
     }
 
