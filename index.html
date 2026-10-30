@@ -170,6 +170,47 @@ body.on-done .quiz, body.on-done .home{display:none}
 .warnbox{background:var(--bad-soft); color:var(--bad); border-radius:12px;
   padding:10px 13px; font-size:12.5px; line-height:1.7; text-align:left; margin-top:10px}
 
+/* ---------- 创建词库 ---------- */
+.build{display:none; flex-direction:column; gap:12px}
+body.on-build .build{display:flex}
+body.on-build .home{display:none}
+.bhead{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.bhead h2{font-size:16px; margin:0; font-weight:650}
+.bhead .dict-stat{margin-left:auto; font-size:11.5px; color:var(--text-2); opacity:.9; text-align:right}
+.searchbox{display:flex; flex-direction:column; gap:6px}
+.searchbox input{font:inherit; font-size:16px; font-weight:600; padding:13px 15px; border-radius:15px;
+  border:1.5px solid var(--line); background:var(--surface); color:var(--text); width:100%; user-select:text}
+.searchbox input:focus{outline:none; border-color:var(--primary)}
+.hit-card{background:var(--surface); border:1px solid var(--line); border-radius:15px; padding:13px 15px}
+.hit-head{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:8px}
+.hit-head .hw{font-size:20px; font-weight:680}
+.hit-head .ph{font-size:12.5px; color:var(--text-2)}
+.hit-head .pos{font-size:11.5px; font-weight:600; color:var(--primary); background:var(--primary-soft);
+  padding:2px 8px; border-radius:999px}
+.hit-head .tags{font-size:11px; color:var(--text-2); background:var(--surface-2); padding:2px 8px; border-radius:999px}
+.senses{display:flex; flex-direction:column; gap:6px; margin:0 0 10px}
+.sense{display:flex; gap:9px; align-items:flex-start; font-size:13.5px; line-height:1.6;
+  cursor:pointer; text-align:left; color:var(--text); font-weight:500; user-select:text}
+.sense input{margin:4px 0 0; flex:0 0 auto}
+.hit-tip{font-size:12.5px; color:var(--text-2); line-height:1.6; margin:0 0 8px; text-align:left}
+.hit-tip.small{font-size:11.5px; margin:6px 0 0}
+.hit-actions{display:flex; gap:8px}
+.hit-actions button{padding:9px 14px; font-size:13.5px; border-radius:11px}
+.chips{display:flex; gap:6px; flex-wrap:wrap; margin-top:9px}
+.chipbtn{font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px;
+  background:var(--surface-2); border:1px solid var(--line); color:var(--text-2)}
+.rows{display:flex; flex-direction:column; gap:7px}
+.brow{display:flex; gap:10px; align-items:flex-start; background:var(--surface);
+  border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+.brow .bw{font-weight:650; font-size:14px; min-width:86px; word-break:break-word}
+.brow .bz{flex:1; font-size:13px; line-height:1.55; color:var(--text-2); text-align:left}
+.brow button.mini{background:none; border:none; color:var(--bad); font-size:15px; padding:0 4px; flex:0 0 auto}
+.build-empty{font-size:12.5px; color:var(--text-2); text-align:center; padding:18px 0}
+.metabox{display:flex; gap:9px; flex-wrap:wrap}
+.metabox label{flex:1 1 120px; display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:var(--text-2)}
+.metabox input{font:inherit; font-size:13px; padding:9px 11px; border-radius:11px;
+  border:1px solid var(--line); background:var(--surface); color:var(--text); user-select:text}
+
 /* ---------- 空状态 ---------- */
 .empty{display:none; text-align:center; background:var(--surface); border:1px solid var(--line);
   border-radius:var(--radius); box-shadow:var(--shadow); padding:34px 22px}
@@ -251,6 +292,10 @@ body.no-list .hint{display:none}
     </div>
     </div>
 
+    <div class="btnlist">
+      <button id="bBuild">✏️ 创建词库 <span class="sub">内置 77 万词英汉词典</span></button>
+    </div>
+
     <p class="hint">
       复习间隔按 1 / 2 / 4 / 8 / 15 / 30 / 60 天递进。答错的词会当场插回后面第 4、8、16 题，
       并且进度退回上一档——隔得越久忘得越少，所以宁可多隔几天，也别一个晚上猛刷十遍。
@@ -286,6 +331,38 @@ body.no-list .hint{display:none}
         <button id="bClose">收起</button>
       </div>
     </div>
+  </div>
+
+  <!-- 创建词库 -->
+  <div class="build">
+    <div class="bhead">
+      <button class="iconbtn" id="bBuildBack" title="回首页" aria-label="回首页">←</button>
+      <h2>创建词库</h2>
+      <span class="dict-stat" id="dictStat">词典未载入</span>
+    </div>
+
+    <div class="searchbox">
+      <input id="dictInput" type="search" placeholder="输入英文单词，自动带出音标和释义…"
+             autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="linkbtn" id="bDictPick">词典没载入 / 想换一本</button>
+      <input type="file" id="dictFile" accept=".js,.csv,.txt" hidden>
+    </div>
+
+    <div class="hit" id="dictHit" hidden></div>
+
+    <p class="build-empty" id="buildEmpty">词表还是空的。上面输入单词，勾好释义点「加入词表」。</p>
+    <div class="rows" id="rowList"></div>
+
+    <div class="metabox">
+      <label>词书 id<input id="metaId" value="list-new" spellcheck="false"></label>
+      <label>词书标题<input id="metaTitle" value="我的词书" spellcheck="false"></label>
+    </div>
+
+    <div class="foot">
+      <button class="act primary" id="bBuildExport">💾 导出词书 .js</button>
+      <button class="act" id="bBuildClear">清空</button>
+    </div>
+    <p class="hint">导出后用首页「📂 选择本地词书文件」载入。编辑中的词表会自动存在本机，刷新不丢。</p>
   </div>
 
   <!-- 答题 -->
@@ -1177,20 +1254,16 @@ body.no-list .hint{display:none}
     ]
   };
 
-  function buildTestBankFile(){
+  // 把一本词书序列化成 .js 文本（创建词库 / 测试词表共用）
+  function emitBankFile(id, title, words){
     var out = [];
-    out.push('/* ===== 测试词表（10 词 · 六年级难度） ===== */');
-    out.push('/* 由页面一键下载得到；在首页「选择本地词书文件」里选它就能练 */');
-    out.push('/* 也可以当新词书的模板：照着改 id / title / words */');
-    out.push('');
     out.push('window.VOCAB_LISTS = {');
-    out.push('  ' + JSON.stringify(TEST_BANK.id) + ': {');
-    out.push('    title: ' + JSON.stringify(TEST_BANK.title) + ',');
+    out.push('  ' + JSON.stringify(id) + ': {');
+    out.push('    title: ' + JSON.stringify(title) + ',');
     out.push('    words: [');
-    var ws = TEST_BANK.words;
-    for(var i=0;i<ws.length;i++){
-      var row = ws[i].map(function(x){ return JSON.stringify(String(x)); }).join(', ');
-      out.push('      [' + row + ']' + (i < ws.length - 1 ? ',' : ''));
+    for(var i=0;i<words.length;i++){
+      var row = words[i].map(function(x){ return JSON.stringify(String(x)); }).join(', ');
+      out.push('      [' + row + ']' + (i < words.length - 1 ? ',' : ''));
     }
     out.push('    ]');
     out.push('  }');
@@ -1199,25 +1272,36 @@ body.no-list .hint{display:none}
     return out.join('\n');
   }
 
-  function downloadTestBank(){
-    var text = buildTestBankFile();
-    var done = '测试词表已保存 ✓ 再用「选择本地词书文件」把它载进来';
+  function buildTestBankFile(){
+    return '/* ===== 测试词表（10 词 · 六年级难度） ===== */\n' +
+           '/* 由页面一键下载得到；在首页「选择本地词书文件」里选它就能练 */\n' +
+           '/* 也可以当新词书的模板：照着改 id / title / words */\n\n' +
+           emitBankFile(TEST_BANK.id, TEST_BANK.title, TEST_BANK.words);
+  }
+
+  // 真·一键：优先弹系统保存框（Chrome / Edge），否则退回下载
+  function saveTextAs(text, name, note){
     if(window.showSaveFilePicker){
       window.showSaveFilePicker({
-        suggestedName: 'test.js',
+        suggestedName: name,
         types: [{ description: '词库文件', accept: { 'text/javascript': ['.js'] } }]
       }).then(function(handle){
         return handle.createWritable().then(function(w){
           return w.write(text).then(function(){ return w.close(); });
         });
-      }).then(function(){ toast(done); })
+      }).then(function(){ toast(note); })
         .catch(function(err){
           if(err && err.name === 'AbortError') return;
-          downloadWordsFile(text, 'test.js', done);
+          downloadWordsFile(text, name, note);
         });
     } else {
-      downloadWordsFile(text, 'test.js', done);
+      downloadWordsFile(text, name, note);
     }
+  }
+
+  function downloadTestBank(){
+    saveTextAs(buildTestBankFile(), 'test.js',
+               '测试词表已保存 ✓ 再用「选择本地词书文件」把它载进来');
   }
 
   $('bTest0').addEventListener('click', downloadTestBank);
@@ -1315,7 +1399,10 @@ body.no-list .hint{display:none}
 
   document.addEventListener('keydown', function(e){
     var mode = document.body.className;
+    if(mode.indexOf('on-build') >= 0) return;
     if(mode === 'on-home' || mode === 'on-done') return;
+    var tag = e.target && e.target.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA') return;
     var k = e.key;
 
     if(k >= '1' && k <= '4'){ e.preventDefault(); answer(parseInt(k, 10) - 1); return; }
@@ -1340,6 +1427,433 @@ body.no-list .hint{display:none}
     renderHome();
   });
 
+
+  // ================= 创建词库（懒加载内置 ECDICT 词典） =================
+  var DICT = { raw:null, buckets:null, count:0, state:'idle' };
+  var BUILD = { rows: [] };
+  var HIT = { cur: null, senses: [] };
+
+  var POSMAP = { n:'n.', v:'v.', vt:'v.', vi:'v.', a:'adj.', adj:'adj.', adv:'adv.',
+                 prep:'prep.', conj:'conj.', pron:'pron.', num:'num.', art:'art.',
+                 int:'int.', aux:'aux.', abbr:'abbr.', pl:'pl.' };
+  var POSRE = /^(n|v|vt|vi|a|adj|adv|prep|conj|pron|num|art|int|aux|abbr|pl)\./;
+  var TAGMAP = { zk:'中考', gk:'高考', cet4:'四级', cet6:'六级', ky:'考研',
+                 toefl:'托福', ielts:'雅思', gre:'GRE' };
+  var SUFFIX = [['ies','y'],['ied','y'],['ier','y'],['iest','y'],['es',''],['ed',''],
+                ['ing',''],['er',''],['est',''],['s','']];
+
+  function dictSetStat(t){ var el = $('dictStat'); if(el) el.textContent = t; }
+
+  function openBuild(){
+    document.body.className = 'on-build';
+    renderBuild();
+    if(DICT.raw) return;
+    if(DICT.state === 'loading') return;
+    if(window.ECDICT_TSV){ indexDict(window.ECDICT_TSV); return; }
+    DICT.state = 'loading';
+    dictSetStat('词典载入中…（50MB，第一次会慢几秒）');
+    var sc = document.createElement('script');
+    sc.src = 'dict/ecdict.js';
+    sc.onload = function(){
+      if(!window.ECDICT_TSV){ DICT.state = 'error'; dictSetStat('词典文件加载失败'); return; }
+      indexDict(window.ECDICT_TSV);
+    };
+    sc.onerror = function(){
+      DICT.state = 'error';
+      dictSetStat('没找到 dict/ecdict.js');
+      toast('没找到词典文件，点「词典没载入 / 想换一本」手动选一次');
+    };
+    document.body.appendChild(sc);
+  }
+
+  // 建索引：只记每行起点，不解析；按首字母分桶，查词时只扫一个桶
+  function indexDict(raw){
+    var t0 = Date.now();
+    dictSetStat('正在给词典建索引…');
+    var buckets = {}, n = raw.length, pos = 0, count = 0;
+    while(pos < n){
+      var e = raw.indexOf('\n', pos);
+      if(e < 0) e = n;
+      var key = raw.charAt(pos).toLowerCase();
+      if(!buckets[key]) buckets[key] = [];
+      buckets[key].push(pos);
+      count++;
+      pos = e + 1;
+    }
+    for(var k in buckets){
+      if(Object.prototype.hasOwnProperty.call(buckets, k)) buckets[k] = new Int32Array(buckets[k]);
+    }
+    DICT.raw = raw; DICT.buckets = buckets; DICT.count = count; DICT.state = 'ready';
+    dictSetStat('词典就绪 · ' + count + ' 词条 · 建索引 ' + (Date.now() - t0) + 'ms');
+  }
+
+  function dictLineAt(st){
+    var raw = DICT.raw, e = raw.indexOf('\n', st);
+    if(e < 0) e = raw.length;
+    var f = raw.substring(st, e).split('\t');
+    return { word:f[0] || '', ph:f[1] || '', pos:f[2] || '', tr:f[3] || '',
+             tag:f[4] || '', ex:f[5] || '' };
+  }
+
+  function dictExact(q){
+    if(!DICT.raw) return null;
+    var list = DICT.buckets[q.charAt(0)];
+    if(!list) return null;
+    var raw = DICT.raw, qn = q.length;
+    for(var i=0;i<list.length;i++){
+      var st = list[i];
+      if(raw.charCodeAt(st + qn) !== 9) continue;      // 后面得紧跟制表符
+      if(raw.substr(st, qn).toLowerCase() === q) return dictLineAt(st);
+    }
+    return null;
+  }
+
+  function dictPrefix(q, limit){
+    var out = [];
+    if(!DICT.raw || limit <= 0) return out;
+    var list = DICT.buckets[q.charAt(0)];
+    if(!list) return out;
+    var raw = DICT.raw, qn = q.length;
+    for(var i=0;i<list.length && out.length < limit;i++){
+      var st = list[i];
+      if(raw.substr(st, qn).toLowerCase() === q) out.push(dictLineAt(st));
+    }
+    return out;
+  }
+
+  // 查词：先精确，再试常见词尾变化，最后给前缀候选
+  function dictQuery(q){
+    q = String(q || '').trim().toLowerCase();
+    if(!DICT.raw || !q) return { exact:null, list:[], base:null };
+    var hit = dictExact(q);
+    if(hit) return { exact:hit, list:dictPrefix(q, 8), base:null };
+    for(var i=0;i<SUFFIX.length;i++){
+      var sf = SUFFIX[i][0];
+      if(q.length > sf.length + 2 && q.slice(-sf.length) === sf){
+        var b = dictExact(q.slice(0, -sf.length) + SUFFIX[i][1]);
+        if(b) return { exact:null, list:[], base:b };
+      }
+    }
+    return { exact:null, list:dictPrefix(q, 8), base:null };
+  }
+
+  function fmtPos(pos){
+    if(!pos) return '';
+    var parts = String(pos).split('/'), out = [];
+    for(var i=0;i<parts.length;i++){
+      var k = parts[i].split(':')[0].toLowerCase();
+      var v = POSMAP[k];
+      if(v && out.indexOf(v) < 0) out.push(v);
+    }
+    return out.join('/');
+  }
+
+  function posOf(d){
+    var p = fmtPos(d.pos);
+    if(p) return p;
+    var senses = dictSenses(d.tr);
+    for(var i=0;i<senses.length;i++){
+      var m = senses[i].match(POSRE);
+      if(m) return POSMAP[m[1]] || '';
+    }
+    return '';
+  }
+
+  function fmtTags(tag){
+    if(!tag) return '';
+    var parts = String(tag).split(/\s+/), out = [];
+    for(var i=0;i<parts.length;i++){
+      var t = TAGMAP[parts[i].toLowerCase()];
+      if(t && out.indexOf(t) < 0) out.push(t);
+    }
+    return out.join(' · ');
+  }
+
+  function exPlain(ex){
+    if(!ex) return '';
+    var marks = { p:'过去式', d:'过去分词', i:'现在分词', '3':'三单', s:'复数',
+                  r:'比较级', t:'最高级', '0':'原形' };
+    var parts = String(ex).split('/'), out = [];
+    for(var i=0;i<parts.length;i++){
+      var kv = parts[i].split(':');
+      if(kv.length === 2 && marks[kv[0]]) out.push(marks[kv[0]] + ' ' + kv[1]);
+    }
+    return out.slice(0, 4).join('，');
+  }
+
+  function dictSenses(tr){
+    var parts = String(tr || '').split('\\n'), out = [];
+    for(var i=0;i<parts.length;i++){
+      var t = parts[i].replace(/\s+$/, '').replace(/^\s+/, '');
+      if(t) out.push(t);
+    }
+    return out;
+  }
+
+  function cardHTML(d){
+    var senses = dictSenses(d.tr);
+    HIT.cur = d;
+    HIT.senses = senses;
+    var html = '<div class="hit-card"><div class="hit-head"><b class="hw">' + esc(d.word) + '</b>';
+    if(d.ph) html += '<span class="ph">/' + esc(d.ph) + '/</span>';
+    var pos = posOf(d);
+    if(pos) html += '<span class="pos">' + esc(pos) + '</span>';
+    var tg = fmtTags(d.tag);
+    if(tg) html += '<span class="tags">' + esc(tg) + '</span>';
+    html += '</div>';
+    if(!senses.length){
+      html += '<div class="hit-tip">这个词条没有中文释义，只能手填。</div>';
+    } else {
+      html += '<div class="senses">';
+      for(var i=0;i<senses.length && i<8;i++){
+        html += '<label class="sense"><input type="checkbox" checked value="' + i + '">' +
+                '<span>' + esc(senses[i]) + '</span></label>';
+      }
+      html += '</div>';
+    }
+    var exp = exPlain(d.ex);
+    if(exp) html += '<div class="hit-tip small">变形：' + esc(exp) + '</div>';
+    html += '<div class="hit-actions"><button class="primary" data-act="add">加入词表</button>' +
+            '<button data-act="manual">手填释义</button></div></div>';
+    return html;
+  }
+
+  function searchDict(){
+    var box = $('dictHit');
+    var q = $('dictInput').value.trim();
+    if(!DICT.raw){ box.hidden = true; return; }
+    if(!q){ box.hidden = true; return; }
+    var res = dictQuery(q);
+    var html = '';
+    if(res.base){
+      html = '<div class="hit-tip">「' + esc(q) + '」是变形，原形是 <b>' + esc(res.base.word) + '</b></div>' +
+             cardHTML(res.base);
+    } else if(!res.list.length){
+      html = '<div class="hit-tip">词典里没有 <b>' + esc(q) + '</b>，可以手填释义加进去。</div>' +
+             '<div class="hit-actions"><button class="primary" data-act="manual">手填释义</button></div>';
+      HIT.cur = null; HIT.senses = [];
+    } else {
+      html = cardHTML(res.list[0]);
+      if(res.list.length > 1){
+        html += '<div class="chips">';
+        for(var i=1;i<res.list.length && i<8;i++){
+          html += '<button class="chipbtn" data-w="' + esc(res.list[i].word) + '">' +
+                  esc(res.list[i].word) + '</button>';
+        }
+        html += '</div>';
+      }
+    }
+    box.innerHTML = html;
+    box.hidden = false;
+  }
+
+  function upsertRow(row){
+    var i;
+    for(i=0;i<BUILD.rows.length;i++){
+      if(String(BUILD.rows[i][0]).toLowerCase() === String(row[0]).toLowerCase()){
+        BUILD.rows[i] = row;
+        renderBuild(); saveBuildState();
+        toast('已更新「' + row[0] + '」');
+        return;
+      }
+    }
+    BUILD.rows.push(row);
+    renderBuild(); saveBuildState();
+    toast('已加入「' + row[0] + '」，共 ' + BUILD.rows.length + ' 条');
+  }
+
+  function addFromCard(){
+    var d = HIT.cur;
+    if(!d) return;
+    var boxes = $('dictHit').querySelectorAll('.sense input');
+    var picked = [], posList = [];
+    for(var i=0;i<boxes.length;i++){
+      if(!boxes[i].checked) continue;
+      var t = HIT.senses[parseInt(boxes[i].getAttribute('value'), 10)] || '';
+      if(!t) continue;
+      // 释义自带的词性前缀去掉，单独放进 pos，免得在选项里重复一遍
+      var m = t.match(POSRE);
+      var p = '';
+      if(m){ p = POSMAP[m[1]] || (m[1] + '.'); t = t.slice(m[0].length).replace(/^\s+/, ''); }
+      if(!t) continue;
+      picked.push(t);
+      if(p && posList.indexOf(p) < 0) posList.push(p);
+    }
+    if(!picked.length){ toast('至少勾一条释义'); return; }
+    var bits = [];
+    if(d.ph) bits.push('音标 /' + d.ph + '/');
+    var tg = fmtTags(d.tag);
+    if(tg) bits.push(tg);
+    upsertRow([d.word, posList.join('/') || posOf(d), picked.join('；'), bits.join(' · ')]);
+  }
+
+  function addManual(word){
+    word = String(word || '').trim();
+    if(!word){ toast('先在输入框里写个单词'); return; }
+    var zh = window.prompt('「' + word + '」的释义（可留空以后再改）：', '');
+    if(zh === null) return;
+    var posWord = window.prompt('词性（如 n. / v. / adj.，可留空）：', '');
+    if(posWord === null) posWord = '';
+    upsertRow([word, (posWord || '').trim(), (zh || '').trim(), '']);
+  }
+
+  function renderBuild(){
+    var box = $('rowList');
+    if(!box) return;
+    var html = '';
+    for(var i=0;i<BUILD.rows.length;i++){
+      var r = BUILD.rows[i];
+      html += '<div class="brow"><div class="bw">' + esc(r[0]) + '</div>' +
+              '<div class="bz">' + esc(((r[1] ? r[1] + ' ' : '') + (r[2] || ''))) + '</div>' +
+              '<button class="mini" data-act="del" data-i="' + i + '" title="删掉">✕</button></div>';
+    }
+    box.innerHTML = html;
+    var em = $('buildEmpty');
+    if(em) em.hidden = BUILD.rows.length > 0;
+  }
+
+  function saveBuildState(){
+    try{
+      localStorage.setItem('satvocab.build.v1', JSON.stringify({
+        rows: BUILD.rows, id: $('metaId').value, title: $('metaTitle').value
+      }));
+    }catch(e){}
+  }
+
+  function loadBuildState(){
+    try{
+      var raw = localStorage.getItem('satvocab.build.v1');
+      if(!raw) return;
+      var o = JSON.parse(raw);
+      if(o && o.rows && o.rows.length){ BUILD.rows = o.rows; }
+      if(o && o.id) $('metaId').value = o.id;
+      if(o && o.title) $('metaTitle').value = o.title;
+    }catch(e){}
+  }
+
+  // 备用：直接把 ecdict.csv 当词典载入（列顺序按 ECDICT 原版）
+  function csvToTsv(text){
+    var lines = String(text).split(/\r?\n/), out = [];
+    for(var i=1;i<lines.length;i++){
+      var ln = lines[i];
+      if(!ln) continue;
+      var f = [], cur = '', q = false;
+      for(var j=0;j<ln.length;j++){
+        var c = ln.charAt(j);
+        if(q){
+          if(c === '"'){
+            if(ln.charAt(j + 1) === '"'){ cur += '"'; j++; }
+            else q = false;
+          } else cur += c;
+        } else if(c === '"'){ q = true; }
+        else if(c === ','){ f.push(cur); cur = ''; }
+        else cur += c;
+      }
+      f.push(cur);
+      if(!f[0]) continue;
+      out.push([f[0], f[1] || '', f[4] || '', f[3] || '', f[7] || '',
+                f[10] || '', f[8] || '', f[9] || ''].join('\t'));
+    }
+    return out.join('\n');
+  }
+
+  if($('bBuild')) $('bBuild').addEventListener('click', openBuild);
+  if($('bBuildBack')) $('bBuildBack').addEventListener('click', function(){ renderHome(); });
+
+  if($('dictInput')){
+    var dictTimer = null;
+    $('dictInput').addEventListener('input', function(){
+      if(dictTimer) clearTimeout(dictTimer);
+      dictTimer = setTimeout(searchDict, 130);
+    });
+    $('dictInput').addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); searchDict(); }
+      e.stopPropagation();
+    });
+  }
+
+  if($('dictHit')){
+    $('dictHit').addEventListener('click', function(e){
+      var t = e.target;
+      while(t && t !== this){
+        if(t.getAttribute){
+          var w = t.getAttribute('data-w');
+          if(w){ $('dictInput').value = w; searchDict(); return; }
+          var act = t.getAttribute('data-act');
+          if(act === 'add'){ addFromCard(); return; }
+          if(act === 'manual'){ addManual($('dictInput').value.trim() || (HIT.cur ? HIT.cur.word : '')); return; }
+        }
+        t = t.parentNode;
+      }
+    });
+  }
+
+  if($('rowList')){
+    $('rowList').addEventListener('click', function(e){
+      var t = e.target;
+      while(t && t !== this){
+        if(t.getAttribute && t.getAttribute('data-act') === 'del'){
+          BUILD.rows.splice(parseInt(t.getAttribute('data-i'), 10), 1);
+          renderBuild(); saveBuildState();
+          return;
+        }
+        t = t.parentNode;
+      }
+    });
+  }
+
+  if($('bDictPick')) $('bDictPick').addEventListener('click', function(){ $('dictFile').click(); });
+  if($('dictFile')){
+    $('dictFile').addEventListener('change', function(){
+      var f = this.files && this.files[0];
+      if(!f) return;
+      var reader = new FileReader(), self = this;
+      reader.onload = function(){
+        try{
+          var text = String(reader.result || '');
+          dictSetStat('正在读取 ' + f.name + '…');
+          if(/\.csv$/i.test(f.name)){
+            indexDict(csvToTsv(text));
+          } else {
+            var box = {};
+            new Function('window', text)(box);
+            if(!box.ECDICT_TSV) throw new Error('不是词典文件');
+            indexDict(box.ECDICT_TSV);
+          }
+        }catch(err){
+          dictSetStat('词典读取失败');
+          toast('词典读取失败：' + (err && err.message ? err.message : '格式不对'));
+        }
+      };
+      reader.onerror = function(){ toast('词典文件读取失败'); };
+      reader.readAsText(f, 'utf-8');
+      self.value = '';
+    });
+  }
+
+  if($('metaId')) $('metaId').addEventListener('input', saveBuildState);
+  if($('metaTitle')) $('metaTitle').addEventListener('input', saveBuildState);
+
+  if($('bBuildExport')){
+    $('bBuildExport').addEventListener('click', function(){
+      if(!BUILD.rows.length){ toast('词表还是空的'); return; }
+      var id = ($('metaId').value || '').trim() || 'list-new';
+      var title = ($('metaTitle').value || '').trim() || id;
+      saveBuildState();
+      saveTextAs(emitBankFile(id, title, BUILD.rows), id + '.js',
+                 '已保存 ' + id + '.js ✓ 回首页用「选择词书文件」载入');
+    });
+  }
+
+  if($('bBuildClear')){
+    $('bBuildClear').addEventListener('click', function(){
+      if(!BUILD.rows.length) return;
+      if(!window.confirm('清空编辑中的词表？已经导出的文件不受影响。')) return;
+      BUILD.rows = [];
+      renderBuild(); saveBuildState();
+    });
+  }
+
   // ---- 启动 ----
   function initList(){
     LIST = LISTS[listId];
@@ -1351,6 +1865,7 @@ body.no-list .hint{display:none}
   (function boot(){
     paintSwatches();
     loadSeed();
+    loadBuildState();
     try{
       if(window.matchMedia){
         var mq = window.matchMedia('(prefers-color-scheme: dark)');

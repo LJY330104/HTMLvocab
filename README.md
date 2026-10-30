@@ -3,11 +3,17 @@
 一个纯本地、单文件的背单词小工具。双击 `index.html` 就能用，不用装任何东西、不用联网、不用起服务器。
 
 ```
-sat-vocab/
+HTMLvocab/
 ├── index.html            ← 双击这个
 ├── lists/
 │   ├── list13-14.js      ← 主词库（SAT Word List 13–14，97 词）
 │   └── test.js           ← 测试词表（10 词 · 六年级）
+├── dict/
+│   ├── ecdict.js         ← 内置英汉词典（77 万词条，约 50MB，点「创建词库」才加载）
+│   └── LICENSE-ECDICT    ← ECDICT 的 MIT 许可原文
+├── tools/
+│   └── build_dict.py     ← 重新生成 dict/ecdict.js 用的脚本
+├── LICENSE               ← 本项目的 MIT 许可
 └── README.md             ← 就是这份说明
 ```
 
@@ -78,6 +84,25 @@ sat-vocab/
 间隔档位、错词插回、答对复查、一键保存，10 个词一轮几十秒走完，不费脑。
 载入后进度单独存在 `satvocab.v1.test` 下，**和 list-01 互不影响**。
 这个文件也可以直接当新词书的模板用。
+
+### 创建词库（自己录词）
+
+首页 **「✏️ 创建词库」**，进去以后：
+
+1. 输入框里打英文单词，**自动带出音标、词性、中文义项**（数据来自内置的 ECDICT 词典）。
+2. 打的是变形也能认：比如输 `perceived` 会提示「是变形，原形是 perceive」。
+3. 勾要哪几条义项 → 点「加入词表」。同名词会自动覆盖，不会重复。
+4. 下面列出已加的词，点 ✕ 删掉；改上面两个框里的 `id` 和标题。
+5. 点 **「💾 导出词书 .js」**，存成 `list-new.js` 这种文件，回首页载入即可。
+
+详说几点：
+
+- **词典是懒加载的**：`dict/ecdict.js` 那 50MB 只有在你点开「创建词库」时才读，平时不占一点内存。
+  载入后会给词典建一次行索引（几十毫秒），之后每次查词 1–4ms。
+- **词典里查不到**的词，可以点「手填释义」自己写，照样能加进词表。
+- 编辑中的词表**存在浏览器里**（`satvocab.build.v1`），刷新页面不丢；导出之后这才算进了文件。
+- 换一本词典：页面上「词典没载入 / 想换一本」可以手动选 `dict/ecdict.js`，
+  或者直接把 ECDICT 原版 `ecdict.csv` 丢进去也能认。
 
 ### 换词书
 
@@ -190,6 +215,33 @@ window.VOCAB_LISTS = {
 进度存在浏览器的 `localStorage` 里，键名 `satvocab.v1.<词库id>`。**清浏览器数据会一起清掉**，这点要有心理准备。
 
 ---
+
+## 数据来源与许可
+
+| 内容 | 来源 | 许可 |
+|---|---|---|
+| 本项目代码 | 自己写的 | MIT（见 `LICENSE`） |
+| `dict/ecdict.js` | [ECDICT](https://github.com/skywind3000/ECDICT)（ecdict.csv，77 万词条，Copyright (c) 2025 Linwei） | MIT（见 `dict/LICENSE-ECDICT`） |
+
+ECDICT 是 MIT 协议，允许复制、修改、再分发，**唯一要求是保留版权声明和许可文本**——
+所以 `dict/LICENSE-ECDICT` 必须跟 `dict/ecdict.js` 待在一起，别删。
+
+`dict/ecdict.js` 是把 `ecdict.csv` 重新排版而已：**词条一条没删**（770,611 条），
+只去掉了跟录词无关的列，并改成「一行一条、制表符分隔」，方便网页按行索引：
+
+| 保留 | 列 |
+|---|---|
+| ✅ | `word` `phonetic` `pos` `translation` `tag` `exchange` `bnc` `frq` |
+| ❌ | `definition`（英文释义）、`detail`、`audio`（后两个原库里本来就是空的） |
+
+想改这些设置就改 `tools/build_dict.py` 顶部的 `KEEP`，重跑一次：
+
+```bash
+python3 tools/build_dict.py ecdict.csv dict/ecdict.js          # 默认
+python3 tools/build_dict.py ecdict.csv dict/ecdict.js --full   # 连英文释义一起留下
+```
+
+`ecdict.csv` 需要自己从 ECDICT 仓库下（约 63MB），本仓库没有再存一份原版 CSV。
 
 ## 为什么这么设计
 
