@@ -1,0 +1,5 @@
+# lists/ 里只放行示例词表，其余一律不进仓库：
+# 自己的词书、导出的 words.js、"xxx 2.js" 这种重复副本都留在本地。
+*
+!.gitignore
+!test.js

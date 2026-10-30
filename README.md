@@ -6,8 +6,9 @@
 HTMLvocab/
 ├── index.html            ← 双击这个
 ├── lists/
-│   ├── list13-14.js      ← 主词库（SAT Word List 13–14，97 词）
-│   └── test.js           ← 测试词表（10 词 · 六年级）
+│   ├── .gitignore        ← 只放行 test.js，其余词书都不入库
+│   ├── test.js           ← 示例 / 测试词表（10 词 · 六年级）
+│   └── list13-14.js      ← 本地私用词库（97 词，**不在仓库里**，只在作者硬盘上）
 ├── dict/
 │   ├── ecdict.js         ← 内置英汉词典（77 万词条，约 50MB，点「创建词库」才加载）
 │   └── LICENSE-ECDICT    ← ECDICT 的 MIT 许可原文
@@ -103,6 +104,20 @@ HTMLvocab/
 - 编辑中的词表**存在浏览器里**（`satvocab.build.v1`），刷新页面不丢；导出之后这才算进了文件。
 - 换一本词典：页面上「词典没载入 / 想换一本」可以手动选 `dict/ecdict.js`，
   或者直接把 ECDICT 原版 `ecdict.csv` 丢进去也能认。
+
+### `lists/` 里只提交示例词表
+
+`lists/.gitignore` 用的是「全忽略再放行」的写法：
+
+```gitignore
+*
+!.gitignore
+!test.js
+```
+
+意思就是：这个目录里**只**提交 `test.js`，其余的一律不进仓库——
+你自己录的词书、导出的 `words.js`、`list13-14 2.js` 这种重复副本，都老老实实待在硬盘上。
+想加一本公开的示例词书，就在那个文件里加一行 `!你的文件名.js`。
 
 ### 换词书
 
