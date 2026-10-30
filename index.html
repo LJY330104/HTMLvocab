@@ -342,7 +342,7 @@ body.no-list .hint{display:none}
     </div>
 
     <div class="searchbox">
-      <input id="dictInput" type="search" placeholder="输入英文单词，自动带出音标和释义…"
+      <input id="dictInput" type="search" placeholder="输入英文单词，回车加入词表…"
              autocomplete="off" autocapitalize="off" spellcheck="false">
       <button class="linkbtn" id="bDictPick">词典没载入 / 想换一本</button>
       <input type="file" id="dictFile" accept=".js,.csv,.txt" hidden>
@@ -350,7 +350,7 @@ body.no-list .hint{display:none}
 
     <div class="hit" id="dictHit" hidden></div>
 
-    <p class="build-empty" id="buildEmpty">词表还是空的。上面输入单词，勾好释义点「加入词表」。</p>
+    <p class="build-empty" id="buildEmpty">词表还是空的。上面输入单词，回车就加进去（想挑义项就用鼠标勾选后再点「加入词表」）。</p>
     <div class="rows" id="rowList"></div>
 
     <div class="metabox">
@@ -1431,7 +1431,7 @@ body.no-list .hint{display:none}
   // ================= 创建词库（懒加载内置 ECDICT 词典） =================
   var DICT = { raw:null, buckets:null, count:0, state:'idle' };
   var BUILD = { rows: [] };
-  var HIT = { cur: null, senses: [] };
+  var HIT = { cur: null, senses: [], q: '' };
 
   var POSMAP = { n:'n.', v:'v.', vt:'v.', vi:'v.', a:'adj.', adj:'adj.', adv:'adv.',
                  prep:'prep.', conj:'conj.', pron:'pron.', num:'num.', art:'art.',
@@ -1621,6 +1621,7 @@ body.no-list .hint{display:none}
   function searchDict(){
     var box = $('dictHit');
     var q = $('dictInput').value.trim();
+    HIT.q = q;
     if(!DICT.raw){ box.hidden = true; return; }
     if(!q){ box.hidden = true; return; }
     var res = dictQuery(q);
@@ -1647,6 +1648,23 @@ body.no-list .hint{display:none}
     box.hidden = false;
   }
 
+  // 回车：查到了就直接把（默认全勾的）释义加进词表；查不到转手填
+  function enterAdd(){
+    var q = $('dictInput').value.trim();
+    if(!q){ toast('先输入一个单词'); return; }
+    if(!HIT.cur || HIT.q !== q) searchDict();
+    if(HIT.cur && HIT.senses.length){
+      if(!addFromCard()) return;          // 一条都没勾就留着别清空
+    } else {
+      addManual(q);
+      return;
+    }
+    $('dictInput').value = '';
+    $('dictHit').hidden = true;
+    HIT.cur = null; HIT.senses = []; HIT.q = '';
+    try{ $('dictInput').focus(); }catch(e){}
+  }
+
   function upsertRow(row){
     var i;
     for(i=0;i<BUILD.rows.length;i++){
@@ -1664,7 +1682,7 @@ body.no-list .hint{display:none}
 
   function addFromCard(){
     var d = HIT.cur;
-    if(!d) return;
+    if(!d) return false;
     var boxes = $('dictHit').querySelectorAll('.sense input');
     var picked = [], posList = [];
     for(var i=0;i<boxes.length;i++){
@@ -1679,12 +1697,13 @@ body.no-list .hint{display:none}
       picked.push(t);
       if(p && posList.indexOf(p) < 0) posList.push(p);
     }
-    if(!picked.length){ toast('至少勾一条释义'); return; }
+    if(!picked.length){ toast('至少勾一条释义'); return false; }
     var bits = [];
     if(d.ph) bits.push('音标 /' + d.ph + '/');
     var tg = fmtTags(d.tag);
     if(tg) bits.push(tg);
     upsertRow([d.word, posList.join('/') || posOf(d), picked.join('；'), bits.join(' · ')]);
+    return true;
   }
 
   function addManual(word){
@@ -1767,7 +1786,7 @@ body.no-list .hint{display:none}
       dictTimer = setTimeout(searchDict, 130);
     });
     $('dictInput').addEventListener('keydown', function(e){
-      if(e.key === 'Enter'){ e.preventDefault(); searchDict(); }
+      if(e.key === 'Enter'){ e.preventDefault(); enterAdd(); }
       e.stopPropagation();
     });
   }
