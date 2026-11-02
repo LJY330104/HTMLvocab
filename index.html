@@ -274,15 +274,14 @@ body.no-list .hint{display:none}
 
     <div class="loaded-only">
     <div class="grid">
-      <div class="tile hot"><b id="tDue">0</b><span>今日到期</span></div>
-      <div class="tile"><b id="tNew">0</b><span>还没学</span></div>
-      <div class="tile dim"><b id="tMaster">0</b><span>已掌握</span></div>
+      <div class="tile hot"><b id="tNew">0</b><span>还没练过</span></div>
+      <div class="tile"><b id="tSeen">0</b><span>练过</span></div>
+      <div class="tile dim"><b id="tBad">0</b><span>错过</span></div>
       <div class="tile dim"><b id="tTotal">0</b><span>词库总数</span></div>
     </div>
     <div class="btnlist">
-      <button class="primary" id="bMix">开始今天的复习 <span class="sub" id="sMix"></span></button>
-      <button id="bDue">只练到期的 <span class="sub" id="sDue"></span></button>
-      <button id="bAll">全部打乱来一轮 <span class="sub" id="sAll"></span></button>
+      <button class="primary" id="bAll">全部打乱来一轮 <span class="sub" id="sAll"></span></button>
+      <button id="bNew">只练还没练过的 <span class="sub" id="sNew"></span></button>
       <button id="bSave">💾 一键保存进度到词书</button>
       <button id="bLoad">📂 选择本地词书文件（.js）</button>
       <input type="file" id="fileInput" accept=".js,.json,.txt,text/javascript,application/javascript" hidden>
@@ -297,8 +296,8 @@ body.no-list .hint{display:none}
     </div>
 
     <p class="hint">
-      复习间隔按 1 / 2 / 4 / 8 / 15 / 30 / 60 天递进。答错的词会当场插回后面第 4、8、16 题，
-      并且进度退回上一档——隔得越久忘得越少，所以宁可多隔几天，也别一个晚上猛刷十遍。
+      答错的词会当场插回后面第 4、8、16 题，答对的词也会在 10 题后再考一次确认。
+      没有跨天的复习计划——练几轮、什么时候练，全看你自己的节奏。
     </p>
 
     <div class="export" id="themeBox" hidden>
@@ -408,8 +407,6 @@ body.no-list .hint{display:none}
 (function(){
   'use strict';
 
-  var INT = [1, 2, 4, 8, 15, 30, 60];      // 天：已掌握到什么档，下一次隔多久
-  var DAY = 86400000;
   var GAPS = [4, 8, 16];
   var CONFIRM_GAP = 10;                     // 答对后隔几题再来确认一次                    // 答错后插回队列的“间隔几题”
 
@@ -430,7 +427,7 @@ body.no-list .hint{display:none}
   // ---- 状态 ----
   var LISTS = window.VOCAB_LISTS || {};
   var listId = null, LIST = null, TOTAL = 0;
-  var prog = {};                 // 每个词的 SRS 记录
+  var prog = {};                 // 每个词的练习记录：seen / ok / bad / ts
   var queue = [], qi = 0;        // 本轮队列
   var wrongCnt = {}, sessOk = {}, sessBad = {}, everBad = {};
   var confirmScheduled = {}, confirmFlag = {};   // 复查排期 / 本次出现是否为复查
@@ -468,8 +465,8 @@ body.no-list .hint{display:none}
       var w = keys[i];
       if(merged[w]) continue;
       var a = fromFile[w], b = fromLocal[w];
-      if(a && b) merged[w] = ((b.ts || 0) >= (a.ts || 0)) ? b : a;
-      else merged[w] = b || a;
+      var pick = (a && b) ? (((b.ts || 0) >= (a.ts || 0)) ? b : a) : (b || a);
+      merged[w] = { seen:pick.seen || 0, ok:pick.ok || 0, bad:pick.bad || 0, ts:pick.ts || 0 };
     }
     prog = merged;
   }
@@ -491,10 +488,9 @@ body.no-list .hint{display:none}
   }
   function rec(i){
     var w = W(i)[0];
-    if(!prog[w]) prog[w] = { lvl:0, due:0, seen:0, ok:0, bad:0 };
+    if(!prog[w]) prog[w] = { seen:0, ok:0, bad:0, ts:0 };
     return prog[w];
   }
-  function isDue(i){ var r = prog[W(i)[0]]; return !!r && r.due <= Date.now(); }
   function isNew(i){ return !prog[W(i)[0]]; }
 
   // ---- 选项生成 ----
@@ -522,45 +518,38 @@ body.no-list .hint{display:none}
     $('cLeft').hidden = $('cOk').hidden = $('cNo').hidden = true;
     $('prog').style.width = '0%';
 
-    var due = 0, fresh = 0, master = 0;
+    var fresh = 0, seen = 0, miss = 0;
     for(var i=0;i<TOTAL;i++){
       var r = prog[W(i)[0]];
-      if(!r) fresh++;
+      if(!r || !r.seen) fresh++;
       else {
-        if(r.due <= Date.now()) due++;
-        if(r.lvl >= 4) master++;
+        seen++;
+        if(r.bad) miss++;
       }
     }
-    $('tDue').textContent = due;
     $('tNew').textContent = fresh;
-    $('tMaster').textContent = master;
+    $('tSeen').textContent = seen;
+    $('tBad').textContent = miss;
     $('tTotal').textContent = TOTAL;
 
-    var mixN = due + fresh;
-    $('sMix').textContent = mixN ? '（' + mixN + ' 词：到期 ' + due + ' + 新词 ' + fresh + '）' : '';
-    $('sDue').textContent = due ? '（' + due + ' 词）' : '（现在没有到期的）';
-    $('sAll').textContent = '（' + TOTAL + ' 词）';
-    $('bDue').disabled = (due === 0);
+    $('sAll').textContent = TOTAL ? '（' + TOTAL + ' 词）' : '';
+    $('sNew').textContent = fresh ? '（' + fresh + ' 词）' : '（都练过了）';
+    $('bNew').disabled = (fresh === 0);
 
     if(TOTAL === 0){ $('hello').textContent = ''; }
-    else if(mixN === 0){ $('hello').textContent = '今天的复习都清完了。想加练就点「全部打乱」，不然就去休息吧。'; }
-    else if(due > 0){ $('hello').textContent = '有 ' + due + ' 个词到期该复习了，另有 ' + fresh + ' 个还没学过。'; }
-    else { $('hello').textContent = '还没开始学这批词，今天先把 ' + fresh + ' 个新词过一遍吧。'; }
+    else if(seen === 0){ $('hello').textContent = '这本词书还没动过，全部打乱来一轮吧。'; }
+    else if(fresh > 0){ $('hello').textContent = '练过 ' + seen + ' 个，还剩 ' + fresh + ' 个没练过。'; }
+    else { $('hello').textContent = '这本词书全都练过了，想巩固就再来一轮。'; }
   }
 
   // ---- 开始一轮 ----
   function start(mode){
     if(TOTAL === 0 || !LIST){ toast('先选一个词书文件，再开始练习'); return; }
-    var due = [], fresh = [], all = range(TOTAL);
-    for(var i=0;i<TOTAL;i++){
-      var r = prog[W(i)[0]];
-      if(!r) fresh.push(i); else if(r.due <= Date.now()) due.push(i);
-    }
+    var all = range(TOTAL), fresh = [];
+    for(var i=0;i<TOTAL;i++){ if(isNew(i)) fresh.push(i); }
     var picked;
-    if(mode === 'due') picked = shuffle(due.slice());
-    else if(mode === 'new') picked = shuffle(fresh.slice());
-    else if(mode === 'all') picked = shuffle(all.slice());
-    else picked = shuffle(due.concat(fresh));          // mix
+    if(mode === 'new') picked = shuffle(fresh.slice());
+    else picked = shuffle(all.slice());
     if(picked.length === 0) picked = shuffle(all.slice());
 
     queue = picked.slice();
@@ -838,11 +827,10 @@ body.no-list .hint{display:none}
     $('prog').style.width = (total ? (qi / total * 100) : 0) + '%';
   }
 
-  // ---- 结算 + 写入 SRS ----
+  // ---- 结算 + 写进度 ----
   function finish(){
     var now = Date.now();
     var idxs = Object.keys(answeredWords).map(Number);
-    var ups = 0, downs = 0;
 
     for(var k=0;k<idxs.length;k++){
       var i = idxs[k];
@@ -851,18 +839,6 @@ body.no-list .hint{display:none}
       r.ok = (r.ok || 0) + (sessOk[i] || 0);
       r.bad = (r.bad || 0) + (sessBad[i] || 0);
       r.ts = now;
-      if(sessBad[i]){
-        // 掉档：退回到上一档，下一次隔得更近
-        if(r.lvl > 0) downs++;
-        r.lvl = Math.max(0, (r.lvl || 0) - 1);
-        r.due = now + INT[r.lvl] * DAY;
-      } else {
-        // 升级：本次按当前档位安排下次，然后档位上移一档
-        ups++;
-        var lv = Math.min(INT.length - 1, r.lvl || 0);
-        r.due = now + INT[lv] * DAY;
-        r.lvl = Math.min(INT.length - 1, lv + 1);
-      }
     }
     saveProg();
 
@@ -873,18 +849,18 @@ body.no-list .hint{display:none}
     $('sRate').textContent = (totalQ ? Math.round((totalQ - firstTryBad) / totalQ * 100) : 0) + '%';
 
     var t, txt;
-    if(firstTryBad === 0){ t = '一次全对'; txt = '这一轮没有词掉档，间隔会顺利往前走。'; }
-    else if(firstTryBad <= 5){ t = '就差一点点'; txt = '有 ' + firstTryBad + ' 个词没一次答对，它们的间隔退回 1 天了。'; }
-    else { t = '这批还不牢'; txt = firstTryBad + ' 个词掉档了。别急着今晚补，明天再来一次效果更好。'; }
+    if(firstTryBad === 0){ t = '一次全对'; txt = '这一轮没有词答错，收工。'; }
+    else if(firstTryBad <= 5){ t = '就差一点点'; txt = '有 ' + firstTryBad + ' 个词没一次答对，它们都已经插回来重练过了。'; }
+    else { t = '这批还不牢'; txt = firstTryBad + ' 个词没一次答对。过一会儿再来一轮，比现在硬刷管用。'; }
     $('sumTitle').textContent = t;
     $('sumText').textContent = txt;
 
-    var dueCount = 0;
-    for(var q=0;q<TOTAL;q++){ var rr = prog[W(q)[0]]; if(rr && rr.due <= Date.now()) dueCount++; }
+    var leftNew = 0;
+    for(var q=0;q<TOTAL;q++){ if(isNew(q)) leftNew++; }
     $('nextDue').innerHTML =
-      '本轮碰到 <b>' + idxs.length + '</b> 个词 · 间隔<b>上调 ' + ups + ' 个</b>、<b>退回 ' + downs + ' 个</b>' +
-      '<br>明天到期：<b>' + dueCount + '</b> 个' +
-      '<br><span style="opacity:.75">提示：当天猛刷只能提升「当下熟练度」，跨天的间隔复习才是真正把它推进到长期记忆里的办法。</span>';
+      '本轮碰到 <b>' + idxs.length + '</b> 个词 · 其中 <b>' + firstTryBad + '</b> 个没一次答对' +
+      '<br>这本词书还剩 <b>' + leftNew + '</b> 个词没练过' +
+      '<br><span style="opacity:.75">进度已经记在本机了；要带走就点下面「一键保存进度到词书」。</span>';
 
     $('bAgain').hidden = (Object.keys(sessBad).length === 0);
     $('prog').style.width = '100%';
@@ -898,9 +874,8 @@ body.no-list .hint{display:none}
   });
 
   $('btnNext').addEventListener('click', next);
-  $('bMix').addEventListener('click', function(){ start('mix'); });
-  $('bDue').addEventListener('click', function(){ start('due'); });
   $('bAll').addEventListener('click', function(){ start('all'); });
+  $('bNew').addEventListener('click', function(){ start('new'); });
   $('btnQuit').addEventListener('click', function(){ finish(); });
   $('bAgain').addEventListener('click', function(){
     var bad = Object.keys(sessBad).map(Number);
