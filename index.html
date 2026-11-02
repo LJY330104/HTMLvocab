@@ -135,6 +135,9 @@ button.locked{opacity:.55; cursor:progress}
 .export-btns button{padding:9px 14px; font-size:13px; border-radius:11px}
 .foot{display:flex; gap:10px}
 button.act{flex:1}
+button.mini-save{flex:0 0 auto; padding:14px 12px; font-size:12.5px; font-weight:600;
+  color:var(--text-2); background:var(--surface); border-radius:15px; white-space:nowrap}
+button.mini-save:active{transform:scale(.97)}
 button.act[hidden]{display:none}
 kbd{font:inherit; font-size:11px; font-weight:600; opacity:.55; border:1px solid currentColor;
   border-radius:5px; padding:0 5px; margin-left:6px}
@@ -379,6 +382,7 @@ body.no-list .hint{display:none}
     <div class="foot">
       <button class="act primary" id="btnNext" hidden>继续 →</button>
       <button class="act" id="btnQuit">不练了</button>
+      <button class="mini-save" id="btnSaveQuick" title="保存进度到词书（双击 ↓）">💾 存</button>
     </div>
   </div>
 
@@ -556,6 +560,7 @@ body.no-list .hint{display:none}
     qi = 0;
     wrongCnt = {}; sessOk = {}; sessBad = {}; everBad = {}; answeredWords = {};
     confirmScheduled = {}; confirmFlag = {};
+    committedSeen = {}; committedOk = {}; committedBad = {};
     okCount = 0; badCount = 0; firstTryBad = 0; answered = false;
 
     document.body.className = 'on-quiz';
@@ -811,6 +816,27 @@ body.no-list .hint{display:none}
     updateKeyHints();
   }
 
+  // 双击 ↓ / 点小按钮 → 一键保存进度到词书
+  var downTapAt = 0, DOUBLE_TAP_MS = 700;
+
+  function quickSave(){
+    if(!LIST || TOTAL === 0){ toast('还没有载入词书'); return; }
+    commitProgress();          // 先把这一轮已经答的算进进度，再存文件
+    saveProgressToFile();
+  }
+
+  function downTap(){
+    var now = Date.now();
+    if(downTapAt && now - downTapAt <= DOUBLE_TAP_MS){
+      downTapAt = 0;
+      quickSave();
+      return true;
+    }
+    downTapAt = now;
+    toast('再按一次 ↓ 保存进度到词书');
+    return false;
+  }
+
   function next(){
     if(!answered || $('btnNext').disabled) return;
     stopLock();
@@ -827,20 +853,33 @@ body.no-list .hint{display:none}
     $('prog').style.width = (total ? (qi / total * 100) : 0) + '%';
   }
 
-  // ---- 结算 + 写进度 ----
-  function finish(){
+  // ---- 写进度（可重入：中途存档、最后结算都走这里，只累加新增部分） ----
+  var committedSeen = {}, committedOk = {}, committedBad = {};
+
+  function commitProgress(){
+    if(!LIST || TOTAL === 0) return;
     var now = Date.now();
     var idxs = Object.keys(answeredWords).map(Number);
-
     for(var k=0;k<idxs.length;k++){
       var i = idxs[k];
+      if(!answeredWords[i]) continue;
       var r = rec(i);
-      r.seen = (r.seen || 0) + 1;
-      r.ok = (r.ok || 0) + (sessOk[i] || 0);
-      r.bad = (r.bad || 0) + (sessBad[i] || 0);
-      r.ts = now;
+      var seenNow = 1, okNow = sessOk[i] || 0, badNow = sessBad[i] || 0;
+      var dSeen = seenNow - (committedSeen[i] || 0);
+      var dOk = okNow - (committedOk[i] || 0);
+      var dBad = badNow - (committedBad[i] || 0);
+      if(dSeen) r.seen = (r.seen || 0) + dSeen;
+      if(dOk) r.ok = (r.ok || 0) + dOk;
+      if(dBad) r.bad = (r.bad || 0) + dBad;
+      if(dSeen || dOk || dBad) r.ts = now;
+      committedSeen[i] = seenNow; committedOk[i] = okNow; committedBad[i] = badNow;
     }
     saveProg();
+  }
+
+  function finish(){
+    commitProgress();
+    var idxs = Object.keys(answeredWords).map(Number);
 
     document.body.className = 'on-done';
     var totalQ = okCount + badCount;
@@ -874,6 +913,7 @@ body.no-list .hint{display:none}
   });
 
   $('btnNext').addEventListener('click', next);
+  $('btnSaveQuick').addEventListener('click', quickSave);
   $('bAll').addEventListener('click', function(){ start('all'); });
   $('bNew').addEventListener('click', function(){ start('new'); });
   $('btnQuit').addEventListener('click', function(){ finish(); });
@@ -883,6 +923,7 @@ body.no-list .hint{display:none}
     queue = shuffle(bad.slice()); qi = 0;
     wrongCnt = {}; sessOk = {}; sessBad = {}; everBad = {}; answeredWords = {};
     confirmScheduled = {}; confirmFlag = {};
+    committedSeen = {}; committedOk = {}; committedBad = {};
     okCount = 0; badCount = 0; firstTryBad = 0; answered = false;
     document.body.className = 'on-quiz';
     renderQuestion();
@@ -1117,15 +1158,19 @@ body.no-list .hint{display:none}
     if(!el) return;
     if(!answered){
       el.innerHTML = '<span><kbd>1</kbd>–<kbd>4</kbd> 选释义</span>' +
-                     '<span class="warn"><kbd>←</kbd> 不认识（看答案，记错）</span>';
+                     '<span class="warn"><kbd>←</kbd> 不认识（看答案，记错）</span>' +
+                     '<span><kbd>↓</kbd><kbd>↓</kbd> 存进度</span>';
     } else if(answerState === 'right'){
       el.innerHTML = '<span class="warn"><kbd>←</kbd> 其实是蒙的</span>' +
-                     '<span class="go"><kbd>→</kbd> 继续</span>';
+                     '<span class="go"><kbd>→</kbd> 继续</span>' +
+                     '<span><kbd>↓</kbd><kbd>↓</kbd> 存进度</span>';
     } else if(answerState === 'guessed'){
-      el.innerHTML = '<span class="go"><kbd>→</kbd> 继续（2 秒后）</span>';
+      el.innerHTML = '<span class="go"><kbd>→</kbd> 继续（2 秒后）</span>' +
+                     '<span><kbd>↓</kbd><kbd>↓</kbd> 存进度</span>';
     } else {
       el.innerHTML = '<span class="warn"><kbd>←</kbd> 手滑了，撤销重答</span>' +
-                     '<span class="go"><kbd>→</kbd> 继续（2 秒后）</span>';
+                     '<span class="go"><kbd>→</kbd> 继续（2 秒后）</span>' +
+                     '<span><kbd>↓</kbd><kbd>↓</kbd> 存进度</span>';
     }
   }
 
@@ -1387,6 +1432,12 @@ body.no-list .hint{display:none}
       if(!answered) revealAnswer();                 // 没作答 → 不认识，记为错
       else if(answerState === 'right') markAsGuess(); // 已答对 → 承认是蒙的，改判错
       else undoWrong();                             // 已答错 → 手滑，撤销重答
+      return;
+    }
+
+    if(k === 'ArrowDown'){
+      e.preventDefault();
+      downTap();
       return;
     }
 
