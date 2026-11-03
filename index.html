@@ -5,23 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SAT 词汇 · 复习</title>
 <style>
+/* 亮 / 暗两套底色；JS 支持的浏览器还会按种子色重算一遍 */
 :root{
-  --bg:#F6F7F4; --surface:#FFFFFF; --surface-2:#EEF0EB; --surface-3:#E5E8E1;
-  --text:#1B1C19; --text-2:#5D6058; --line:#DDE0D8;
+  --bg:#EDEEE9; --surface:#EDEEE9; --surface-2:#E4E6DF; --surface-3:#DBDDD5;
+  --text:#1B1C19; --text-2:#5D6058; --line:#E0E2DA;
   --primary:#3F6653; --primary-c:#FFFFFF; --primary-soft:#DCEBE1;
   --good:#2F6B47; --good-soft:#D9EDE0; --good-line:#8FC0A3;
   --bad:#8C4A3F; --bad-soft:#F3DDD8; --bad-line:#D5A096;
-  --shadow:0 1px 2px rgba(20,28,20,.06), 0 10px 26px rgba(20,28,20,.07);
-  --radius:20px;
+  --shadow:0 1px 2px rgba(20,28,20,.05);
+  --neo-l:rgba(255,255,255,.92); --neo-d:rgba(28,34,26,.15);
+  --neo-out:-5px -5px 12px var(--neo-l), 6px 6px 14px var(--neo-d);
+  --neo-in:inset -3px -3px 8px var(--neo-l), inset 4px 4px 9px var(--neo-d);
+  --radius:22px;
+}
+:root[data-mode="dark"]{
+  --bg:#191C17; --surface:#191C17; --surface-2:#20241E; --surface-3:#272C25;
+  --text:#E6E8DF; --text-2:#A2A79A; --line:#2A2F28;
+  --primary:#9FCBAF; --primary-c:#12211A; --primary-soft:#2A3B30;
+  --good:#8CCFA5; --good-soft:#1F3126; --good-line:#4E7F62;
+  --bad:#E0A79A; --bad-soft:#33241F; --bad-line:#8C5C51;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+  --neo-l:rgba(255,255,255,.055); --neo-d:rgba(0,0,0,.62);
+  --neo-out:-5px -5px 12px var(--neo-l), 6px 6px 14px var(--neo-d);
+  --neo-in:inset -3px -3px 8px var(--neo-l), inset 4px 4px 9px var(--neo-d);
+  --radius:22px;
 }
 @media (prefers-color-scheme: dark){
-  :root{
-    --bg:#12140F; --surface:#1B1E18; --surface-2:#242820; --surface-3:#2E3329;
-    --text:#E6E8DF; --text-2:#A2A79A; --line:#333A2F;
-    --primary:#9FCBAF; --primary-c:#12211A; --primary-soft:#2A3B30;
-    --good:#8CCFA5; --good-soft:#1F3126; --good-line:#4E7F62;
-    --bad:#E0A79A; --bad-soft:#33241F; --bad-line:#8C5C51;
-    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px rgba(0,0,0,.4);
+  :root:not([data-mode="light"]){
+  --bg:#191C17; --surface:#191C17; --surface-2:#20241E; --surface-3:#272C25;
+  --text:#E6E8DF; --text-2:#A2A79A; --line:#2A2F28;
+  --primary:#9FCBAF; --primary-c:#12211A; --primary-soft:#2A3B30;
+  --good:#8CCFA5; --good-soft:#1F3126; --good-line:#4E7F62;
+  --bad:#E0A79A; --bad-soft:#33241F; --bad-line:#8C5C51;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+  --neo-l:rgba(255,255,255,.055); --neo-d:rgba(0,0,0,.62);
+  --neo-out:-5px -5px 12px var(--neo-l), 6px 6px 14px var(--neo-d);
+  --neo-in:inset -3px -3px 8px var(--neo-l), inset 4px 4px 9px var(--neo-d);
+  --radius:22px;
   }
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -186,6 +206,36 @@ body.on-done .quiz, body.on-done .home{display:none}
 .nextdue b{color:var(--text)}
 .summary .btnlist{gap:8px}
 
+/* ---------- 新拟物皮肤（Neumorphism） ---------- */
+body{background:var(--bg)}
+button, .tile, .empty, .summary, .export, .note, .hit-card, .brow, .chip,
+.stat, .nextdue, .bstats span, .retry, .pos, .opt{
+  border-color:transparent;
+  box-shadow:var(--neo-out);
+}
+button:active{transform:scale(.985); box-shadow:var(--neo-in)}
+button:disabled{box-shadow:none}
+button.primary{background:var(--primary); color:var(--primary-c);
+  box-shadow:0 10px 22px -12px var(--primary), -4px -4px 10px var(--neo-l)}
+button.primary:active{box-shadow:0 4px 12px -10px var(--primary), var(--neo-in)}
+.iconbtn{border-radius:50%; box-shadow:var(--neo-out)}
+.linkbtn{box-shadow:none; text-decoration:none; opacity:.72}
+.linkbtn:active{transform:none; box-shadow:none; opacity:.5}
+.opt:hover:not(:disabled){border-color:transparent; box-shadow:var(--neo-out), 0 0 0 2px var(--primary-soft)}
+.opt:active:not(:disabled){transform:scale(.995); box-shadow:var(--neo-in)}
+.opt.correct{background:var(--good-soft); box-shadow:var(--neo-in); color:var(--good)}
+.opt.wrong{background:var(--bad-soft); box-shadow:var(--neo-in); color:var(--bad)}
+.opt.dim{box-shadow:none; opacity:.42}
+.bar{background:var(--surface-2); box-shadow:var(--neo-in)}
+input, select, textarea{background:var(--surface); box-shadow:var(--neo-in)}
+.seedrow input[type=color]{box-shadow:none}
+.note{border-left-width:4px}
+.empty,.summary{background:var(--surface); box-shadow:var(--neo-out), 0 18px 40px -28px var(--neo-d)}
+.toast{box-shadow:0 12px 26px -12px rgba(0,0,0,.5)}
+.moderow{display:flex; gap:8px; margin:0 0 12px}
+.moderow .modebtn{flex:1; padding:10px 8px; font-size:13px; border-radius:14px; box-shadow:var(--neo-out)}
+.moderow .modebtn.on{background:var(--primary-soft); color:var(--primary); box-shadow:var(--neo-in)}
+
 /* ---------- 键位提示 / 提示条 ---------- */
 .keys{display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--text-2); margin-top:1px}
 .keys .warn{color:var(--bad); font-weight:600}
@@ -286,9 +336,35 @@ body.no-list .hint{display:none}
     <span class="chip" id="cLeft" hidden>剩 0</span>
     <span class="chip good" id="cOk" hidden>✓ 0</span>
     <span class="chip bad" id="cNo" hidden>✕ 0</span>
-    <button class="iconbtn" id="bTheme" title="Material You 配色" aria-label="配色">🎨</button>
+    <button class="iconbtn" id="bMode" title="切换亮色 / 暗色" aria-label="切换明暗">☀️</button>
+    <button class="iconbtn" id="bTheme" title="配色与明暗" aria-label="配色">🎨</button>
   </header>
   <div class="bar"><i id="prog"></i></div>
+
+  <!-- 配色面板（放页面顶部） -->
+    <div class="export" id="themeBox" hidden>
+      <p class="export-tip">
+        <b>配色与明暗</b>：选一个种子色，整套界面（主色、容器色、中性色）会按 Material 3
+        的色板规则重新生成；下面的开关直接决定亮色 / 暗色 / 跟随系统。选过的都会记住。
+      </p>
+      <div class="moderow">
+        <button class="modebtn" data-mode="light">☀️ 亮色</button>
+        <button class="modebtn" data-mode="dark">🌙 暗色</button>
+        <button class="modebtn" data-mode="auto">🖥 跟随系统</button>
+      </div>
+      <div class="seedrow">
+        <input type="color" id="seedColor" value="#3F6653" aria-label="种子色">
+        <input type="text" id="seedHex" value="#3F6653" maxlength="7" spellcheck="false" aria-label="色值">
+        <button id="bSeedImg">🖼 从图片取色</button>
+        <input type="file" id="seedImgInput" accept="image/*" hidden>
+      </div>
+      <div class="swatches" id="swatches"></div>
+      <div class="export-btns">
+        <button id="bSeedReset">恢复默认</button>
+        <button id="bThemeClose">收起</button>
+      </div>
+    </div>
+
 
   <!-- 首页 -->
   <div class="home">
@@ -330,24 +406,6 @@ body.no-list .hint{display:none}
       答错的词会当场插回后面第 4、8、16 题，答对的词也会在 10 题后再考一次确认。
       没有跨天的复习计划——练几轮、什么时候练，全看你自己的节奏。
     </p>
-
-    <div class="export" id="themeBox" hidden>
-      <p class="export-tip">
-        <b>Material You 配色</b>：选一个种子色，整套界面（主色、容器色、中性色、明暗模式）
-        会按 Material 3 的色板规则重新生成。选过的颜色会记住。
-      </p>
-      <div class="seedrow">
-        <input type="color" id="seedColor" value="#3F6653" aria-label="种子色">
-        <input type="text" id="seedHex" value="#3F6653" maxlength="7" spellcheck="false" aria-label="色值">
-        <button id="bSeedImg">🖼 从图片取色</button>
-        <input type="file" id="seedImgInput" accept="image/*" hidden>
-      </div>
-      <div class="swatches" id="swatches"></div>
-      <div class="export-btns">
-        <button id="bSeedReset">恢复默认</button>
-        <button id="bThemeClose">收起</button>
-      </div>
-    </div>
 
     <div class="export" id="exportBox" hidden>
       <p class="export-tip">
@@ -1029,6 +1087,8 @@ body.no-list .hint{display:none}
 
   // ================= Material You 动态取色 =================
   var SEED_KEY = 'satvocab.seed';
+  var MODE_KEY = 'satvocab.mode';
+  var MODE = 'auto';                 // auto / light / dark
   var DEFAULT_SEED = '#3f6653';
   var SEED_PRESETS = ['#3f6653', '#41578f', '#8a4f6d', '#a35a34', '#6b6a2e', '#5f4b8b'];
   var SEED = DEFAULT_SEED;
@@ -1090,6 +1150,39 @@ body.no-list .hint{display:none}
     catch(e){ return false; }
   }
 
+  function isDark(){
+    if(MODE === 'dark') return true;
+    if(MODE === 'light') return false;
+    return prefersDark();
+  }
+
+  function loadMode(){
+    var m = null;
+    try{ m = localStorage.getItem(MODE_KEY); }catch(e){}
+    if(m === 'light' || m === 'dark' || m === 'auto') MODE = m;
+  }
+
+  function markMode(){
+    var dark = isDark();
+    try{ document.documentElement.setAttribute('data-mode', dark ? 'dark' : 'light'); }catch(e){}
+    if($('bMode')) $('bMode').textContent = dark ? '🌙' : '☀️';
+    var box = $('themeBox');
+    if(!box) return;
+    var btns = box.querySelectorAll('.modebtn');
+    for(var i=0;i<btns.length;i++){
+      if(btns[i].getAttribute('data-mode') === MODE) btns[i].classList.add('on');
+      else btns[i].classList.remove('on');
+    }
+  }
+
+  function setMode(m){
+    MODE = (m === 'light' || m === 'dark') ? m : 'auto';
+    try{ localStorage.setItem(MODE_KEY, MODE); }catch(e){}
+    applySeed(SEED);
+    markMode();
+    markSwatch();
+  }
+
   function applySeed(hex){
     if(!oklchSupported()) return false;
     var rgb = hex2rgb(hex);
@@ -1104,17 +1197,28 @@ body.no-list .hint{display:none}
     var E = paletteFor(25, 0.16);                                    // 错误红
     var G = paletteFor(150, 0.13);                                   // 成功绿
 
-    var v = prefersDark()
-      ? { '--bg': N(6), '--surface': N(10), '--surface-2': N(19), '--surface-3': N(25),
+    var v = isDark()
+      ? { '--bg': N(12), '--surface': N(12), '--surface-2': N(17), '--surface-3': N(22),
           '--text': N(92), '--text-2': N(72), '--line': N(28),
           '--primary': P(80), '--primary-c': P(20), '--primary-soft': P(30),
           '--good': G(80), '--good-soft': G(22), '--good-line': G(45),
           '--bad': E(80), '--bad-soft': E(28), '--bad-line': E(52) }
-      : { '--bg': N(96), '--surface': N(99), '--surface-2': N(92), '--surface-3': N(88),
+      : { '--bg': N(93), '--surface': N(93), '--surface-2': N(89), '--surface-3': N(85),
           '--text': N(12), '--text-2': N(38), '--line': N(84),
           '--primary': P(40), '--primary-c': P(100), '--primary-soft': P(90),
           '--good': G(36), '--good-soft': G(90), '--good-line': G(72),
           '--bad': E(42), '--bad-soft': E(92), '--bad-line': E(78) };
+
+    // 新拟物：卡片和背景同色，靠双向阴影表达凹凸
+    if(isDark()){
+      v['--neo-l'] = 'rgba(255,255,255,.055)';
+      v['--neo-d'] = 'rgba(0,0,0,.62)';
+    } else {
+      v['--neo-l'] = 'rgba(255,255,255,.92)';
+      v['--neo-d'] = 'rgba(38,44,36,.15)';
+    }
+    v['--neo-out'] = '-5px -5px 12px var(--neo-l), 6px 6px 14px var(--neo-d)';
+    v['--neo-in'] = 'inset -3px -3px 8px var(--neo-l), inset 4px 4px 9px var(--neo-d)';
 
     var root = document.documentElement;
     for(var k in v){ if(Object.prototype.hasOwnProperty.call(v, k)) root.style.setProperty(k, v[k]); }
@@ -1215,6 +1319,15 @@ body.no-list .hint{display:none}
     if(!box.hidden && $('exportBox')) $('exportBox').hidden = true;
   });
   if($('bThemeClose')) $('bThemeClose').addEventListener('click', function(){ $('themeBox').hidden = true; });
+  if($('bMode')) $('bMode').addEventListener('click', function(){ setMode(isDark() ? 'light' : 'dark'); });
+  if($('themeBox')) $('themeBox').addEventListener('click', function(e){
+    var t = e.target;
+    while(t && t !== this){
+      var m = t.getAttribute ? t.getAttribute('data-mode') : null;
+      if(m){ setMode(m); return; }
+      t = t.parentNode;
+    }
+  });
   if($('seedColor')) $('seedColor').addEventListener('input', function(){ setSeed(this.value, true); });
   if($('seedHex')) $('seedHex').addEventListener('change', function(){
     var ok = setSeed(this.value, true);
@@ -2108,12 +2221,19 @@ body.no-list .hint{display:none}
 
   (function boot(){
     paintSwatches();
+    loadMode();
     loadSeed();
+    markMode();
     loadBuildState();
     try{
       if(window.matchMedia){
         var mq = window.matchMedia('(prefers-color-scheme: dark)');
-        var onChange = function(){ applySeed(SEED); markSwatch(); };
+        var onChange = function(){
+          if(MODE !== 'auto') return;
+          applySeed(SEED);
+          markMode();
+          markSwatch();
+        };
         if(mq.addEventListener) mq.addEventListener('change', onChange);
         else if(mq.addListener) mq.addListener(onChange);
       }
