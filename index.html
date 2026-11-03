@@ -7,41 +7,32 @@
 <style>
 /* 亮 / 暗两套底色；JS 支持的浏览器还会按种子色重算一遍 */
 :root{
-  --bg:#EDEEE9; --surface:#EDEEE9; --surface-2:#E4E6DF; --surface-3:#DBDDD5;
-  --text:#1B1C19; --text-2:#5D6058; --line:#E0E2DA;
+  --bg:#F6F7F4; --surface:#FFFFFF; --surface-2:#EEF0EB; --surface-3:#E5E8E1;
+  --text:#1B1C19; --text-2:#5D6058; --line:#DDE0D8;
   --primary:#3F6653; --primary-c:#FFFFFF; --primary-soft:#DCEBE1;
   --good:#2F6B47; --good-soft:#D9EDE0; --good-line:#8FC0A3;
   --bad:#8C4A3F; --bad-soft:#F3DDD8; --bad-line:#D5A096;
-  --shadow:0 1px 2px rgba(20,28,20,.05);
-  --neo-l:rgba(255,255,255,.85); --neo-d:rgba(38,44,36,.11);
-  --neo-out:-3px -3px 7px var(--neo-l), 4px 4px 9px var(--neo-d);
-  --neo-in:inset -2px -2px 5px var(--neo-l), inset 2px 2px 6px var(--neo-d);
-  --radius:22px;
+  --shadow:0 1px 2px rgba(20,28,20,.06), 0 10px 26px rgba(20,28,20,.07);
+  --radius:20px;
 }
 :root[data-mode="dark"]{
-  --bg:#191C17; --surface:#191C17; --surface-2:#20241E; --surface-3:#272C25;
-  --text:#E6E8DF; --text-2:#A2A79A; --line:#2A2F28;
+  --bg:#12140F; --surface:#1B1E18; --surface-2:#242820; --surface-3:#2E3329;
+  --text:#E6E8DF; --text-2:#A2A79A; --line:#333A2F;
   --primary:#9FCBAF; --primary-c:#12211A; --primary-soft:#2A3B30;
   --good:#8CCFA5; --good-soft:#1F3126; --good-line:#4E7F62;
   --bad:#E0A79A; --bad-soft:#33241F; --bad-line:#8C5C51;
-  --shadow:0 1px 2px rgba(0,0,0,.4);
-  --neo-l:rgba(255,255,255,.045); --neo-d:rgba(0,0,0,.5);
-  --neo-out:-3px -3px 7px var(--neo-l), 4px 4px 9px var(--neo-d);
-  --neo-in:inset -2px -2px 5px var(--neo-l), inset 2px 2px 6px var(--neo-d);
-  --radius:22px;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px rgba(0,0,0,.4);
+  --radius:20px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-mode="light"]){
-  --bg:#191C17; --surface:#191C17; --surface-2:#20241E; --surface-3:#272C25;
-  --text:#E6E8DF; --text-2:#A2A79A; --line:#2A2F28;
+  --bg:#12140F; --surface:#1B1E18; --surface-2:#242820; --surface-3:#2E3329;
+  --text:#E6E8DF; --text-2:#A2A79A; --line:#333A2F;
   --primary:#9FCBAF; --primary-c:#12211A; --primary-soft:#2A3B30;
   --good:#8CCFA5; --good-soft:#1F3126; --good-line:#4E7F62;
   --bad:#E0A79A; --bad-soft:#33241F; --bad-line:#8C5C51;
-  --shadow:0 1px 2px rgba(0,0,0,.4);
-  --neo-l:rgba(255,255,255,.045); --neo-d:rgba(0,0,0,.5);
-  --neo-out:-3px -3px 7px var(--neo-l), 4px 4px 9px var(--neo-d);
-  --neo-in:inset -2px -2px 5px var(--neo-l), inset 2px 2px 6px var(--neo-d);
-  --radius:22px;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px rgba(0,0,0,.4);
+  --radius:20px;
   }
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -206,36 +197,6 @@ body.on-done .quiz, body.on-done .home{display:none}
 .nextdue b{color:var(--text)}
 .summary .btnlist{gap:8px}
 
-/* ---------- 新拟物皮肤（Neumorphism） ---------- */
-body{background:var(--bg)}
-button, .tile, .empty, .summary, .export, .note, .hit-card, .brow, .chip,
-.stat, .nextdue, .bstats span, .retry, .pos, .opt{
-  border-color:transparent;
-  box-shadow:var(--neo-out);
-}
-button:active{transform:scale(.985); box-shadow:var(--neo-in)}
-button:disabled{box-shadow:none}
-button.primary{background:var(--primary); color:var(--primary-c);
-  box-shadow:0 8px 18px -12px var(--primary), -3px -3px 7px var(--neo-l)}
-button.primary:active{box-shadow:0 4px 12px -10px var(--primary), var(--neo-in)}
-.iconbtn{border-radius:50%; box-shadow:var(--neo-out)}
-.linkbtn{box-shadow:none; text-decoration:none; opacity:.72}
-.linkbtn:active{transform:none; box-shadow:none; opacity:.5}
-.opt:hover:not(:disabled){border-color:transparent; box-shadow:var(--neo-out), 0 0 0 2px var(--primary-soft)}
-.opt:active:not(:disabled){transform:scale(.995); box-shadow:var(--neo-in)}
-.opt.correct{background:var(--good-soft); box-shadow:var(--neo-in); color:var(--good)}
-.opt.wrong{background:var(--bad-soft); box-shadow:var(--neo-in); color:var(--bad)}
-.opt.dim{box-shadow:none; opacity:.42}
-.bar{background:var(--surface-2); box-shadow:var(--neo-in)}
-input, select, textarea{background:var(--surface); box-shadow:var(--neo-in)}
-.seedrow input[type=color]{box-shadow:none}
-.note{border-left-width:4px}
-.empty,.summary{background:var(--surface); box-shadow:var(--neo-out), 0 14px 30px -26px var(--neo-d)}
-.toast{box-shadow:0 12px 26px -12px rgba(0,0,0,.5)}
-.moderow{display:flex; gap:8px; margin:0 0 12px}
-.moderow .modebtn{flex:1; padding:10px 8px; font-size:13px; border-radius:14px; box-shadow:var(--neo-out)}
-.moderow .modebtn.on{background:var(--primary-soft); color:var(--primary); box-shadow:var(--neo-in)}
-
 /* ---------- 键位提示 / 提示条 ---------- */
 .keys{display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--text-2); margin-top:1px}
 .keys .warn{color:var(--bad); font-weight:600}
@@ -336,27 +297,8 @@ body.no-list .hint{display:none}
     <span class="chip good" id="cOk" hidden>✓ 0</span>
     <span class="chip bad" id="cNo" hidden>✕ 0</span>
     <button class="iconbtn" id="bMode" title="切换亮色 / 暗色" aria-label="切换明暗">☀️</button>
-    <button class="iconbtn" id="bTheme" title="配色与明暗" aria-label="配色">🎨</button>
   </header>
   <div class="bar"><i id="prog"></i></div>
-
-  <!-- 配色面板（放页面顶部） -->
-    <div class="export" id="themeBox" hidden>
-      <p class="export-tip">
-        <b>外观</b>：配色固定用 <code>#4d6bfc</code> 当种子色按 Material 3 规则生成，不用自己调。
-        这里只管明暗。
-      </p>
-      <div class="moderow">
-        <button class="modebtn" data-mode="light">☀️ 亮色</button>
-        <button class="modebtn" data-mode="dark">🌙 暗色</button>
-        <button class="modebtn" data-mode="auto">🖥 跟随系统</button>
-      </div>
-      <div class="export-btns">
-        <button id="bThemeClose">收起</button>
-      </div>
-    </div>
-    </div>
-
 
   <!-- 首页 -->
   <div class="home">
@@ -1156,13 +1098,6 @@ body.no-list .hint{display:none}
     var dark = isDark();
     try{ document.documentElement.setAttribute('data-mode', dark ? 'dark' : 'light'); }catch(e){}
     if($('bMode')) $('bMode').textContent = dark ? '🌙' : '☀️';
-    var box = $('themeBox');
-    if(!box) return;
-    var btns = box.querySelectorAll('.modebtn');
-    for(var i=0;i<btns.length;i++){
-      if(btns[i].getAttribute('data-mode') === MODE) btns[i].classList.add('on');
-      else btns[i].classList.remove('on');
-    }
   }
 
   function setMode(m){
@@ -1187,27 +1122,16 @@ body.no-list .hint{display:none}
     var G = paletteFor(150, 0.13);                                   // 成功绿
 
     var v = isDark()
-      ? { '--bg': N(12), '--surface': N(12), '--surface-2': N(17), '--surface-3': N(22),
+      ? { '--bg': N(6), '--surface': N(10), '--surface-2': N(19), '--surface-3': N(25),
           '--text': N(92), '--text-2': N(72), '--line': N(28),
           '--primary': P(80), '--primary-c': P(20), '--primary-soft': P(30),
           '--good': G(80), '--good-soft': G(22), '--good-line': G(45),
           '--bad': E(80), '--bad-soft': E(28), '--bad-line': E(52) }
-      : { '--bg': N(93), '--surface': N(93), '--surface-2': N(89), '--surface-3': N(85),
+      : { '--bg': N(96), '--surface': N(99), '--surface-2': N(92), '--surface-3': N(88),
           '--text': N(12), '--text-2': N(38), '--line': N(84),
           '--primary': P(40), '--primary-c': P(100), '--primary-soft': P(90),
           '--good': G(36), '--good-soft': G(90), '--good-line': G(72),
           '--bad': E(42), '--bad-soft': E(92), '--bad-line': E(78) };
-
-    // 新拟物：卡片和背景同色，靠双向阴影表达凹凸
-    if(isDark()){
-      v['--neo-l'] = 'rgba(255,255,255,.045)';
-      v['--neo-d'] = 'rgba(0,0,0,.5)';
-    } else {
-      v['--neo-l'] = 'rgba(255,255,255,.85)';
-      v['--neo-d'] = 'rgba(38,44,36,.11)';
-    }
-    v['--neo-out'] = '-3px -3px 7px var(--neo-l), 4px 4px 9px var(--neo-d)';
-    v['--neo-in'] = 'inset -2px -2px 5px var(--neo-l), inset 2px 2px 6px var(--neo-d)';
 
     var root = document.documentElement;
     for(var k in v){ if(Object.prototype.hasOwnProperty.call(v, k)) root.style.setProperty(k, v[k]); }
@@ -1229,21 +1153,6 @@ body.no-list .hint{display:none}
     applySeed(SEED);
   }
 
-  if($('bTheme')) $('bTheme').addEventListener('click', function(){
-    var box = $('themeBox');
-    box.hidden = !box.hidden;
-    if(!box.hidden && $('exportBox')) $('exportBox').hidden = true;
-  });
-  if($('bThemeClose')) $('bThemeClose').addEventListener('click', function(){ $('themeBox').hidden = true; });
-  if($('bMode')) $('bMode').addEventListener('click', function(){ setMode(isDark() ? 'light' : 'dark'); });
-  if($('themeBox')) $('themeBox').addEventListener('click', function(e){
-    var t = e.target;
-    while(t && t !== this){
-      var m = t.getAttribute ? t.getAttribute('data-mode') : null;
-      if(m){ setMode(m); return; }
-      t = t.parentNode;
-    }
-  });
   if($('bLoad2')) $('bLoad2').addEventListener('click', function(){ $('fileInput').click(); });
 
   // ---- 提示条 ----
