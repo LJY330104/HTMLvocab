@@ -13,9 +13,9 @@
   --good:#2F6B47; --good-soft:#D9EDE0; --good-line:#8FC0A3;
   --bad:#8C4A3F; --bad-soft:#F3DDD8; --bad-line:#D5A096;
   --shadow:0 1px 2px rgba(20,28,20,.05);
-  --neo-l:rgba(255,255,255,.92); --neo-d:rgba(28,34,26,.15);
-  --neo-out:-5px -5px 12px var(--neo-l), 6px 6px 14px var(--neo-d);
-  --neo-in:inset -3px -3px 8px var(--neo-l), inset 4px 4px 9px var(--neo-d);
+  --neo-l:rgba(255,255,255,.85); --neo-d:rgba(38,44,36,.11);
+  --neo-out:-3px -3px 7px var(--neo-l), 4px 4px 9px var(--neo-d);
+  --neo-in:inset -2px -2px 5px var(--neo-l), inset 2px 2px 6px var(--neo-d);
   --radius:22px;
 }
 :root[data-mode="dark"]{
@@ -25,9 +25,9 @@
   --good:#8CCFA5; --good-soft:#1F3126; --good-line:#4E7F62;
   --bad:#E0A79A; --bad-soft:#33241F; --bad-line:#8C5C51;
   --shadow:0 1px 2px rgba(0,0,0,.4);
-  --neo-l:rgba(255,255,255,.055); --neo-d:rgba(0,0,0,.62);
-  --neo-out:-5px -5px 12px var(--neo-l), 6px 6px 14px var(--neo-d);
-  --neo-in:inset -3px -3px 8px var(--neo-l), inset 4px 4px 9px var(--neo-d);
+  --neo-l:rgba(255,255,255,.045); --neo-d:rgba(0,0,0,.5);
+  --neo-out:-3px -3px 7px var(--neo-l), 4px 4px 9px var(--neo-d);
+  --neo-in:inset -2px -2px 5px var(--neo-l), inset 2px 2px 6px var(--neo-d);
   --radius:22px;
 }
 @media (prefers-color-scheme: dark){
@@ -38,9 +38,9 @@
   --good:#8CCFA5; --good-soft:#1F3126; --good-line:#4E7F62;
   --bad:#E0A79A; --bad-soft:#33241F; --bad-line:#8C5C51;
   --shadow:0 1px 2px rgba(0,0,0,.4);
-  --neo-l:rgba(255,255,255,.055); --neo-d:rgba(0,0,0,.62);
-  --neo-out:-5px -5px 12px var(--neo-l), 6px 6px 14px var(--neo-d);
-  --neo-in:inset -3px -3px 8px var(--neo-l), inset 4px 4px 9px var(--neo-d);
+  --neo-l:rgba(255,255,255,.045); --neo-d:rgba(0,0,0,.5);
+  --neo-out:-3px -3px 7px var(--neo-l), 4px 4px 9px var(--neo-d);
+  --neo-in:inset -2px -2px 5px var(--neo-l), inset 2px 2px 6px var(--neo-d);
   --radius:22px;
   }
 }
@@ -49,10 +49,10 @@ body{
   margin:0; min-height:100vh; background:var(--bg); color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
   display:flex; justify-content:center;
-  padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+  padding:22px 16px calc(26px + env(safe-area-inset-bottom));
   user-select:none;
 }
-.wrap{width:100%; max-width:620px; display:flex; flex-direction:column; gap:14px}
+.wrap{width:100%; max-width:620px; display:flex; flex-direction:column; gap:18px}
 
 header{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
 header h1{font-size:14px; font-weight:600; margin:0; color:var(--text-2); letter-spacing:.02em}
@@ -71,20 +71,20 @@ select{
   transition:width .35s cubic-bezier(.2,.8,.2,1)}
 
 /* ---------- 首页 ---------- */
-.home{display:flex; flex-direction:column; gap:14px}
+.home{display:flex; flex-direction:column; gap:20px}
 body:not(.on-home) .home{display:none}
-.hello{font-size:14px; color:var(--text-2); line-height:1.7; margin:2px 0 0}
-.grid{display:grid; grid-template-columns:repeat(2,1fr); gap:9px}
-.tile{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px}
+.hello{font-size:14px; color:var(--text-2); line-height:1.8; margin:4px 0 0}
+.grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+.tile{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:17px 18px}
 .tile b{display:block; font-size:24px; font-weight:650; font-variant-numeric:tabular-nums; line-height:1.2}
 .tile span{font-size:12px; color:var(--text-2)}
 .tile.hot b{color:var(--primary)}
 .tile.dim b{opacity:.55}
 
-.btnlist{display:flex; flex-direction:column; gap:9px; margin-top:2px}
+.btnlist{display:flex; flex-direction:column; gap:12px; margin-top:4px}
 button{
   font:inherit; font-weight:600; font-size:15px; border:1px solid var(--line);
-  background:var(--surface); color:var(--text); padding:14px 16px; border-radius:15px;
+  background:var(--surface); color:var(--text); padding:16px 18px; border-radius:16px;
   cursor:pointer; transition:transform .1s, background .15s, opacity .15s;
   display:flex; align-items:center; justify-content:center; gap:8px;
 }
@@ -99,7 +99,7 @@ button .sub{font-size:12px; font-weight:500; opacity:.62}
 .hint{font-size:12px; color:var(--text-2); line-height:1.7; opacity:.85}
 
 /* ---------- 答题 ---------- */
-.quiz{display:none; flex-direction:column; gap:12px}
+.quiz{display:none; flex-direction:column; gap:16px}
 body.on-quiz .quiz{display:flex}
 body.on-quiz .home{display:none}
 .qhead{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:4px 0 0}
@@ -109,13 +109,13 @@ body.on-quiz .home{display:none}
 .retry{font-size:11.5px; font-weight:600; color:var(--bad); background:var(--bad-soft);
   padding:3px 9px; border-radius:999px; white-space:nowrap}
 .ask{font-size:13px; color:var(--text-2)}
-.opts{display:flex; flex-direction:column; gap:9px}
+.opts{display:flex; flex-direction:column; gap:12px}
 .opt{
   display:flex; align-items:flex-start; justify-content:flex-start; gap:11px;
   width:100%; text-align:left;
   font:inherit; font-size:15px; line-height:1.55; color:var(--text);
   background:var(--surface); border:1.5px solid var(--line); border-radius:15px;
-  padding:13px 15px; cursor:pointer;
+  padding:15px 16px; cursor:pointer;
   transition:transform .09s, background .16s, border-color .16s, color .16s;
 }
 .opt .txt{flex:1 1 auto; text-align:left}
@@ -216,7 +216,7 @@ button, .tile, .empty, .summary, .export, .note, .hit-card, .brow, .chip,
 button:active{transform:scale(.985); box-shadow:var(--neo-in)}
 button:disabled{box-shadow:none}
 button.primary{background:var(--primary); color:var(--primary-c);
-  box-shadow:0 10px 22px -12px var(--primary), -4px -4px 10px var(--neo-l)}
+  box-shadow:0 8px 18px -12px var(--primary), -3px -3px 7px var(--neo-l)}
 button.primary:active{box-shadow:0 4px 12px -10px var(--primary), var(--neo-in)}
 .iconbtn{border-radius:50%; box-shadow:var(--neo-out)}
 .linkbtn{box-shadow:none; text-decoration:none; opacity:.72}
@@ -230,7 +230,7 @@ button.primary:active{box-shadow:0 4px 12px -10px var(--primary), var(--neo-in)}
 input, select, textarea{background:var(--surface); box-shadow:var(--neo-in)}
 .seedrow input[type=color]{box-shadow:none}
 .note{border-left-width:4px}
-.empty,.summary{background:var(--surface); box-shadow:var(--neo-out), 0 18px 40px -28px var(--neo-d)}
+.empty,.summary{background:var(--surface); box-shadow:var(--neo-out), 0 14px 30px -26px var(--neo-d)}
 .toast{box-shadow:0 12px 26px -12px rgba(0,0,0,.5)}
 .moderow{display:flex; gap:8px; margin:0 0 12px}
 .moderow .modebtn{flex:1; padding:10px 8px; font-size:13px; border-radius:14px; box-shadow:var(--neo-out)}
@@ -314,7 +314,6 @@ body.no-list .hint{display:none}
   padding:10px 12px; border-radius:11px; border:1px solid var(--line);
   background:var(--surface-2); color:var(--text); font-family:ui-monospace,Menlo,monospace}
 .seedrow button{flex:0 0 auto; font-size:13px; padding:10px 14px; border-radius:11px}
-.swatches{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:4px}
 .swatch{width:30px; height:30px; border-radius:50%; border:2px solid transparent;
   cursor:pointer; padding:0; outline-offset:2px}
 .swatch.on{border-color:var(--text)}
@@ -344,25 +343,18 @@ body.no-list .hint{display:none}
   <!-- 配色面板（放页面顶部） -->
     <div class="export" id="themeBox" hidden>
       <p class="export-tip">
-        <b>配色与明暗</b>：选一个种子色，整套界面（主色、容器色、中性色）会按 Material 3
-        的色板规则重新生成；下面的开关直接决定亮色 / 暗色 / 跟随系统。选过的都会记住。
+        <b>外观</b>：配色固定用 <code>#4d6bfc</code> 当种子色按 Material 3 规则生成，不用自己调。
+        这里只管明暗。
       </p>
       <div class="moderow">
         <button class="modebtn" data-mode="light">☀️ 亮色</button>
         <button class="modebtn" data-mode="dark">🌙 暗色</button>
         <button class="modebtn" data-mode="auto">🖥 跟随系统</button>
       </div>
-      <div class="seedrow">
-        <input type="color" id="seedColor" value="#3F6653" aria-label="种子色">
-        <input type="text" id="seedHex" value="#3F6653" maxlength="7" spellcheck="false" aria-label="色值">
-        <button id="bSeedImg">🖼 从图片取色</button>
-        <input type="file" id="seedImgInput" accept="image/*" hidden>
-      </div>
-      <div class="swatches" id="swatches"></div>
       <div class="export-btns">
-        <button id="bSeedReset">恢复默认</button>
         <button id="bThemeClose">收起</button>
       </div>
+    </div>
     </div>
 
 
@@ -1086,11 +1078,9 @@ body.no-list .hint{display:none}
   });
 
   // ================= Material You 动态取色 =================
-  var SEED_KEY = 'satvocab.seed';
   var MODE_KEY = 'satvocab.mode';
   var MODE = 'auto';                 // auto / light / dark
-  var DEFAULT_SEED = '#3f6653';
-  var SEED_PRESETS = ['#3f6653', '#41578f', '#8a4f6d', '#a35a34', '#6b6a2e', '#5f4b8b'];
+  var DEFAULT_SEED = '#4d6bfc';   // 固定种子色，不再允许自定义
   var SEED = DEFAULT_SEED;
 
   function normalizeHex(x){
@@ -1180,7 +1170,6 @@ body.no-list .hint{display:none}
     try{ localStorage.setItem(MODE_KEY, MODE); }catch(e){}
     applySeed(SEED);
     markMode();
-    markSwatch();
   }
 
   function applySeed(hex){
@@ -1211,108 +1200,35 @@ body.no-list .hint{display:none}
 
     // 新拟物：卡片和背景同色，靠双向阴影表达凹凸
     if(isDark()){
-      v['--neo-l'] = 'rgba(255,255,255,.055)';
-      v['--neo-d'] = 'rgba(0,0,0,.62)';
+      v['--neo-l'] = 'rgba(255,255,255,.045)';
+      v['--neo-d'] = 'rgba(0,0,0,.5)';
     } else {
-      v['--neo-l'] = 'rgba(255,255,255,.92)';
-      v['--neo-d'] = 'rgba(38,44,36,.15)';
+      v['--neo-l'] = 'rgba(255,255,255,.85)';
+      v['--neo-d'] = 'rgba(38,44,36,.11)';
     }
-    v['--neo-out'] = '-5px -5px 12px var(--neo-l), 6px 6px 14px var(--neo-d)';
-    v['--neo-in'] = 'inset -3px -3px 8px var(--neo-l), inset 4px 4px 9px var(--neo-d)';
+    v['--neo-out'] = '-3px -3px 7px var(--neo-l), 4px 4px 9px var(--neo-d)';
+    v['--neo-in'] = 'inset -2px -2px 5px var(--neo-l), inset 2px 2px 6px var(--neo-d)';
 
     var root = document.documentElement;
     for(var k in v){ if(Object.prototype.hasOwnProperty.call(v, k)) root.style.setProperty(k, v[k]); }
     return true;
   }
 
-  function markSwatch(){
-    var box = $('swatches');
-    if(!box) return;
-    var kids = box.querySelectorAll('.swatch');
-    for(var i=0;i<kids.length;i++){
-      var c = kids[i].getAttribute('data-c');
-      if(c && c.toLowerCase() === SEED) kids[i].classList.add('on');
-      else kids[i].classList.remove('on');
-    }
-  }
-
   function setSeed(hex, silent){
     var h = normalizeHex(hex);
-    if(!h){ if(!silent) toast('色值格式不对，比如 #3f6653'); return false; }
+    if(!h){ if(!silent) toast('色值格式不对，比如 #4d6bfc'); return false; }
     SEED = h;
-    try{ localStorage.setItem(SEED_KEY, h); }catch(e){}
-    if($('seedColor')) $('seedColor').value = h;
-    if($('seedHex')) $('seedHex').value = h;
     var ok = applySeed(h);
-    markSwatch();
     if(!silent) toast(ok ? '配色已按 ' + h + ' 重新生成' : '这个浏览器不支持 oklch 动态配色，保留默认色');
     return ok;
   }
 
   function loadSeed(){
-    var h = null;
-    try{ h = localStorage.getItem(SEED_KEY); }catch(e){}
-    var n = normalizeHex(h);
-    if(!n) n = DEFAULT_SEED;
-    SEED = n;
-    if($('seedColor')) $('seedColor').value = n;
-    if($('seedHex')) $('seedHex').value = n;
-    applySeed(n);
-    markSwatch();
+    // 种子色写死，忽略以前存过的自定义色
+    SEED = DEFAULT_SEED;
+    applySeed(SEED);
   }
 
-  function paintSwatches(){
-    var box = $('swatches');
-    if(!box) return;
-    var html = '';
-    for(var i=0;i<SEED_PRESETS.length;i++){
-      html += '<button class="swatch" data-c="' + SEED_PRESETS[i] + '" style="background:' + SEED_PRESETS[i] + '" aria-label="' + SEED_PRESETS[i] + '"></button>';
-    }
-    box.innerHTML = html;
-    markSwatch();
-  }
-
-  // 从图片里取主色：排除近白/近黑/灰，按「出现次数 × 鲜艳度」打分
-  function extractSeedFromImage(file){
-    var url, img = new Image();
-    try{ url = URL.createObjectURL(file); }catch(e){ toast('无法读取这张图片'); return; }
-    img.onload = function(){
-      try{
-        var S = 64, cv = document.createElement('canvas');
-        cv.width = S; cv.height = S;
-        var ctx = cv.getContext('2d');
-        ctx.drawImage(img, 0, 0, S, S);
-        var data = ctx.getImageData(0, 0, S, S).data;
-        var buckets = {}, best = null, bestScore = -1;
-        for(var i=0;i<data.length;i+=4){
-          if(data[i+3] < 128) continue;
-          var lab = rgbToOklab(data[i], data[i+1], data[i+2]);
-          if(lab.L < 0.18 || lab.L > 0.92) continue;
-          var c = Math.sqrt(lab.a*lab.a + lab.b*lab.b);
-          if(c < 0.03) continue;
-          var key = ((data[i] >> 4) << 8) | ((data[i+1] >> 4) << 4) | (data[i+2] >> 4);
-          var bk = buckets[key] || (buckets[key] = { r:0, g:0, b:0, n:0 });
-          bk.r += data[i]; bk.g += data[i+1]; bk.b += data[i+2]; bk.n++;
-        }
-        for(var k in buckets){
-          if(!Object.prototype.hasOwnProperty.call(buckets, k)) continue;
-          var b2 = buckets[k];
-          var l2 = rgbToOklab(b2.r/b2.n, b2.g/b2.n, b2.b/b2.n);
-          var c2 = Math.sqrt(l2.a*l2.a + l2.b*l2.b);
-          var score = b2.n * (0.4 + Math.min(c2, 0.25));
-          if(score > bestScore){ bestScore = score; best = b2; }
-        }
-        if(!best){ toast('这张图里没找到适合当种子的颜色'); return; }
-        var hex = rgb2hex(best.r/best.n, best.g/best.n, best.b/best.n);
-        setSeed(hex);
-      }catch(err){ toast('取色失败：' + (err && err.message ? err.message : '图片可能跨域')); }
-      try{ URL.revokeObjectURL(url); }catch(e){}
-    };
-    img.onerror = function(){ toast('图片读取失败'); };
-    img.src = url;
-  }
-
-  // ---- 配色面板交互 ----
   if($('bTheme')) $('bTheme').addEventListener('click', function(){
     var box = $('themeBox');
     box.hidden = !box.hidden;
@@ -1328,22 +1244,6 @@ body.no-list .hint{display:none}
       t = t.parentNode;
     }
   });
-  if($('seedColor')) $('seedColor').addEventListener('input', function(){ setSeed(this.value, true); });
-  if($('seedHex')) $('seedHex').addEventListener('change', function(){
-    var ok = setSeed(this.value, true);
-    if(!ok) this.value = SEED;
-  });
-  if($('swatches')) $('swatches').addEventListener('click', function(e){
-    var t = e.target;
-    if(t && t.getAttribute && t.getAttribute('data-c')) setSeed(t.getAttribute('data-c'));
-  });
-  if($('bSeedImg')) $('bSeedImg').addEventListener('click', function(){ $('seedImgInput').click(); });
-  if($('seedImgInput')) $('seedImgInput').addEventListener('change', function(){
-    var f = this.files && this.files[0];
-    if(f) extractSeedFromImage(f);
-    this.value = '';
-  });
-  if($('bSeedReset')) $('bSeedReset').addEventListener('click', function(){ setSeed(DEFAULT_SEED); });
   if($('bLoad2')) $('bLoad2').addEventListener('click', function(){ $('fileInput').click(); });
 
   // ---- 提示条 ----
@@ -2220,7 +2120,6 @@ body.no-list .hint{display:none}
   }
 
   (function boot(){
-    paintSwatches();
     loadMode();
     loadSeed();
     markMode();
@@ -2232,7 +2131,6 @@ body.no-list .hint{display:none}
           if(MODE !== 'auto') return;
           applySeed(SEED);
           markMode();
-          markSwatch();
         };
         if(mq.addEventListener) mq.addEventListener('change', onChange);
         else if(mq.addListener) mq.addListener(onChange);
