@@ -110,6 +110,33 @@ body.on-quiz .home{display:none}
 .opt.wrong .num{background:var(--bad); color:var(--surface)}
 .opt.dim{opacity:.42}
 .opt:disabled{cursor:default}
+.opt-more{display:inline-block; margin-left:6px; font-size:12px; font-weight:600;
+  color:var(--primary); text-decoration:underline; text-underline-offset:3px; opacity:.9}
+.opt.correct .opt-more, .opt.wrong .opt-more{color:inherit; opacity:.75}
+
+/* ---------- 手填释义 ---------- */
+.manual{display:flex; gap:7px; flex-wrap:wrap; align-items:center}
+.manual input{font:inherit; font-size:13.5px; padding:9px 11px; border-radius:11px;
+  border:1px solid var(--line); background:var(--surface-2); color:var(--text);
+  user-select:text; min-width:0}
+.manual input.zh{flex:1 1 160px}
+.manual input.pos{flex:0 0 92px}
+.manual button{padding:9px 13px; font-size:13px; border-radius:11px}
+
+/* ---------- 看词表 ---------- */
+.browse{display:none; flex-direction:column; gap:11px}
+body.on-browse .browse{display:flex}
+body.on-browse .home{display:none}
+.browse input.filter{font:inherit; font-size:14px; padding:11px 14px; border-radius:13px;
+  border:1px solid var(--line); background:var(--surface); color:var(--text);
+  width:100%; user-select:text}
+.browse input.filter:focus{outline:none; border-color:var(--primary)}
+.bstats{display:flex; gap:8px; flex-wrap:wrap; font-size:12px; color:var(--text-2)}
+.bstats span{background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:4px 10px}
+.brow .num{font-variant-numeric:tabular-nums; font-size:11.5px; color:var(--text-2); flex:0 0 auto; min-width:26px}
+.brow .marks{flex:0 0 auto; font-size:11.5px; color:var(--text-2); white-space:nowrap}
+.brow .marks b{color:var(--good)}
+.brow .marks i{color:var(--bad); font-style:normal}
 .note{font-size:13.5px; line-height:1.65; color:var(--text-2);
   background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--primary);
   border-radius:12px; padding:11px 14px; display:none}
@@ -285,6 +312,7 @@ body.no-list .hint{display:none}
     <div class="btnlist">
       <button class="primary" id="bAll">全部打乱来一轮 <span class="sub" id="sAll"></span></button>
       <button id="bNew">只练还没练过的 <span class="sub" id="sNew"></span></button>
+      <button id="bBrowse">📋 看词表 <span class="sub" id="sBrowse"></span></button>
       <button id="bSave">💾 一键保存进度到词书</button>
       <button id="bLoad">📂 选择本地词书文件（.js）</button>
       <input type="file" id="fileInput" accept=".js,.json,.txt,text/javascript,application/javascript" hidden>
@@ -362,9 +390,24 @@ body.no-list .hint{display:none}
 
     <div class="foot">
       <button class="act primary" id="bBuildExport">💾 导出词书 .js</button>
+      <button class="act" id="bBuildUse">⚡ 直接载入</button>
       <button class="act" id="bBuildClear">清空</button>
     </div>
     <p class="hint">导出后用首页「📂 选择本地词书文件」载入。编辑中的词表会自动存在本机，刷新不丢。</p>
+  </div>
+
+  <!-- 看词表 -->
+  <div class="browse">
+    <div class="bhead">
+      <button class="iconbtn" id="bBrowseBack" title="回首页" aria-label="回首页">←</button>
+      <h2>词表</h2>
+      <span class="dict-stat" id="browseCount"></span>
+    </div>
+    <input class="filter" id="browseFilter" type="search" placeholder="搜单词或中文释义…"
+           autocomplete="off" spellcheck="false">
+    <div class="bstats" id="browseStats"></div>
+    <div class="rows" id="browseRows"></div>
+    <p class="hint">「练过 / 对 / 错」是本机记下来的练习次数，跟着进度一起保存。</p>
   </div>
 
   <!-- 答题 -->
@@ -538,6 +581,7 @@ body.no-list .hint{display:none}
 
     $('sAll').textContent = TOTAL ? '（' + TOTAL + ' 词）' : '';
     $('sNew').textContent = fresh ? '（' + fresh + ' 词）' : '（都练过了）';
+    $('sBrowse').textContent = TOTAL ? '（' + TOTAL + ' 词）' : '';
     $('bNew').disabled = (fresh === 0);
 
     if(TOTAL === 0){ $('hello').textContent = ''; }
@@ -552,9 +596,12 @@ body.no-list .hint{display:none}
     var all = range(TOTAL), fresh = [];
     for(var i=0;i<TOTAL;i++){ if(isNew(i)) fresh.push(i); }
     var picked;
-    if(mode === 'new') picked = shuffle(fresh.slice());
-    else picked = shuffle(all.slice());
-    if(picked.length === 0) picked = shuffle(all.slice());
+    if(mode === 'new'){
+      if(!fresh.length){ toast('这本词书都练过了，没剩新词'); return; }
+      picked = shuffle(fresh.slice());
+    } else {
+      picked = shuffle(all.slice());
+    }
 
     queue = picked.slice();
     qi = 0;
@@ -596,14 +643,49 @@ body.no-list .hint{display:none}
     $('btnNext').disabled = false;
     $('btnNext').textContent = '继续 →';
 
+    expandedOpts = {};
     var html = '';
     for(var k=0;k<opts.length;k++){
       html += '<button class="opt" data-k="'+k+'"><span class="num">'+(k+1)+'</span>' +
-              '<span class="txt">'+esc(opts[k].t)+'</span></button>';
+              '<span class="txt">'+optInner(k)+'</span></button>';
     }
     $('opts').innerHTML = html;
     updateStats();
     updateKeyHints();
+  }
+
+  // ---- 长选项：超过 30 字折叠，可展开（点「展开」或按 Q/W/E/R） ----
+  var TRUNC_LEN = 30;
+  var expandedOpts = {};
+
+  function optInner(k){
+    var t = String(opts[k].t);
+    if(t.length <= TRUNC_LEN) return esc(t);
+    if(expandedOpts[k]) return esc(t) + '<span class="opt-more" data-more="' + k + '">收起</span>';
+    return esc(t.slice(0, TRUNC_LEN)) + '…<span class="opt-more" data-more="' + k + '">展开</span>';
+  }
+
+  function repaintOpt(k){
+    var list = $('opts').querySelectorAll('.opt');
+    if(!list || !list[k]) return;
+    var el = list[k].querySelector ? list[k].querySelector('.txt') : null;
+    if(el) el.innerHTML = optInner(k);
+  }
+
+  function toggleExpand(k){
+    if(!opts || k < 0 || k >= opts.length) return;
+    if(String(opts[k].t).length <= TRUNC_LEN) return;
+    if(expandedOpts[k]) delete expandedOpts[k]; else expandedOpts[k] = true;
+    repaintOpt(k);
+  }
+
+  function expandAllOpts(){
+    if(!opts) return;
+    var any = false;
+    for(var k=0;k<opts.length;k++){
+      if(String(opts[k].t).length > TRUNC_LEN && !expandedOpts[k]){ expandedOpts[k] = true; any = true; }
+    }
+    if(any) for(var j=0;j<opts.length;j++) repaintOpt(j);
   }
 
   // ---- 判定与反馈 ----
@@ -738,6 +820,7 @@ body.no-list .hint{display:none}
     } else {
       startLock();
     }
+    expandAllOpts();
     try{ $('btnNext').focus({ preventScroll:true }); }catch(e){}
     updateStats();
     updateKeyHints();
@@ -799,7 +882,7 @@ body.no-list .hint{display:none}
     var html = '';
     for(var k=0;k<opts.length;k++){
       html += '<button class="opt" data-k="'+k+'"><span class="num">'+(k+1)+'</span>' +
-              '<span class="txt">'+esc(opts[k].t)+'</span></button>';
+              '<span class="txt">'+optInner(k)+'</span></button>';
     }
     $('opts').innerHTML = html;
 
@@ -907,7 +990,15 @@ body.no-list .hint{display:none}
 
   // ---- 事件 ----
   $('opts').addEventListener('click', function(e){
-    var btn = e.target.closest ? e.target.closest('.opt') : null;
+    var t = e.target;
+    var more = t && t.getAttribute ? t.getAttribute('data-more') : null;
+    if(more !== null && more !== undefined && more !== ''){
+      e.preventDefault();
+      e.stopPropagation();
+      toggleExpand(parseInt(more, 10));
+      return;
+    }
+    var btn = t && t.closest ? t.closest('.opt') : null;
     if(!btn) return;
     answer(parseInt(btn.getAttribute('data-k'), 10));
   });
@@ -1159,6 +1250,7 @@ body.no-list .hint{display:none}
     if(!answered){
       el.innerHTML = '<span><kbd>1</kbd>–<kbd>4</kbd> 选释义</span>' +
                      '<span class="warn"><kbd>←</kbd> 不认识（看答案，记错）</span>' +
+                     '<span><kbd>Q</kbd>–<kbd>R</kbd> 展开选项</span>' +
                      '<span><kbd>↓</kbd><kbd>↓</kbd> 存进度</span>';
     } else if(answerState === 'right'){
       el.innerHTML = '<span class="warn"><kbd>←</kbd> 其实是蒙的</span>' +
@@ -1419,7 +1511,7 @@ body.no-list .hint{display:none}
 
   document.addEventListener('keydown', function(e){
     var mode = document.body.className;
-    if(mode.indexOf('on-build') >= 0) return;
+    if(mode.indexOf('on-build') >= 0 || mode.indexOf('on-browse') >= 0) return;
     if(mode === 'on-home' || mode === 'on-done') return;
     var tag = e.target && e.target.tagName;
     if(tag === 'INPUT' || tag === 'TEXTAREA') return;
@@ -1434,6 +1526,9 @@ body.no-list .hint{display:none}
       else undoWrong();                             // 已答错 → 手滑，撤销重答
       return;
     }
+
+    var qk = 'qwer'.indexOf(String(k).toLowerCase());
+    if(qk >= 0){ e.preventDefault(); toggleExpand(qk); return; }
 
     if(k === 'ArrowDown'){
       e.preventDefault();
@@ -1735,11 +1830,36 @@ body.no-list .hint{display:none}
   function addManual(word){
     word = String(word || '').trim();
     if(!word){ toast('先在输入框里写个单词'); return; }
-    var zh = window.prompt('「' + word + '」的释义（可留空以后再改）：', '');
-    if(zh === null) return;
-    var posWord = window.prompt('词性（如 n. / v. / adj.，可留空）：', '');
-    if(posWord === null) posWord = '';
-    upsertRow([word, (posWord || '').trim(), (zh || '').trim(), '']);
+    showManualForm(word);
+  }
+
+  function showManualForm(word){
+    var box = $('dictHit');
+    box.innerHTML = '<div class="hit-card"><div class="hit-head">' +
+      '<b class="hw">' + esc(word) + '</b><span class="tags">词典里没有，手填一下</span></div>' +
+      '<div class="manual">' +
+      '<input class="zh" id="manualZh" placeholder="中文释义" autocomplete="off" spellcheck="false">' +
+      '<input class="pos" id="manualPos" placeholder="词性" autocomplete="off" spellcheck="false">' +
+      '<button class="primary" data-act="manual-add">加入</button></div></div>';
+    box.hidden = false;
+    HIT.cur = null;
+    HIT.senses = [];
+    HIT.q = word;
+    try{ $('manualZh').focus(); }catch(e){}
+  }
+
+  function submitManual(){
+    var w = String(HIT.q || $('dictInput').value || '').trim();
+    var zhEl = $('manualZh'), posEl = $('manualPos');
+    var zh = zhEl ? String(zhEl.value || '').trim() : '';
+    var posWord = posEl ? String(posEl.value || '').trim() : '';
+    if(!w){ toast('没有单词'); return; }
+    if(!zh){ toast('释义不能空着'); try{ zhEl.focus(); }catch(e){} return; }
+    upsertRow([w, posWord, zh, '']);
+    $('dictInput').value = '';
+    $('dictHit').hidden = true;
+    HIT.q = '';
+    try{ $('dictInput').focus(); }catch(e){}
   }
 
   function renderBuild(){
@@ -1827,9 +1947,16 @@ body.no-list .hint{display:none}
           var act = t.getAttribute('data-act');
           if(act === 'add'){ addFromCard(); return; }
           if(act === 'manual'){ addManual($('dictInput').value.trim() || (HIT.cur ? HIT.cur.word : '')); return; }
+          if(act === 'manual-add'){ submitManual(); return; }
         }
         t = t.parentNode;
       }
+    });
+  }
+
+  if($('dictHit')){
+    $('dictHit').addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); submitManual(); }
     });
   }
 
@@ -1890,6 +2017,34 @@ body.no-list .hint{display:none}
     });
   }
 
+  function loadBankIntoApp(id, title, words){
+    var out = [];
+    for(var i=0;i<words.length;i++){
+      out.push([String(words[i][0]), String(words[i][1] || ''),
+                String(words[i][2] || ''), String(words[i][3] || '')]);
+    }
+    LISTS[id] = { title: title || id, words: out };
+    listId = id;
+    initList();
+    refreshListSelect();
+    renderHome();
+    toast('已载入「' + (title || id) + '」（临时的，刷新就没了）');
+  }
+
+  if($('bBuildUse')){
+    $('bBuildUse').addEventListener('click', function(){
+      if(!BUILD.rows.length){ toast('词表还是空的'); return; }
+      var id = ($('metaId').value || '').trim() || 'list-new';
+      var title = ($('metaTitle').value || '').trim() || id;
+      var ok = window.confirm(
+        '「直接载入」只是把词表放进当前页面，刷新就没了。\n\n' +
+        '想留下就先用「💾 导出词书 .js」存成 ' + id + '.js，' +
+        '以后在首页用「📂 选择本地词书文件」载入。\n\n现在直接载入吗？');
+      if(!ok) return;
+      loadBankIntoApp(id, title, BUILD.rows);
+    });
+  }
+
   if($('bBuildClear')){
     $('bBuildClear').addEventListener('click', function(){
       if(!BUILD.rows.length) return;
@@ -1898,6 +2053,50 @@ body.no-list .hint{display:none}
       renderBuild(); saveBuildState();
     });
   }
+
+  // ================= 看词表 =================
+  function openBrowse(){
+    if(!LIST || TOTAL === 0){ toast('先载入词书'); return; }
+    document.body.className = 'on-browse';
+    $('browseFilter').value = '';
+    renderBrowse();
+  }
+
+  function renderBrowse(){
+    if(!LIST) return;
+    var q = String($('browseFilter').value || '').trim().toLowerCase();
+    var rows = '', shown = 0, seen = 0, miss = 0, okSum = 0, badSum = 0;
+    for(var i=0;i<TOTAL;i++){
+      var w = W(i);
+      var r = prog[w[0]] || null;
+      if(r){
+        if(r.seen) seen++;
+        if(r.bad) miss++;
+        okSum += r.ok || 0;
+        badSum += r.bad || 0;
+      }
+      if(q){
+        var hay = (w[0] + ' ' + w[1] + ' ' + w[2] + ' ' + (w[3] || '')).toLowerCase();
+        if(hay.indexOf(q) < 0) continue;
+      }
+      shown++;
+      rows += '<div class="brow"><span class="num">' + (i + 1) + '</span>' +
+              '<div class="bw">' + esc(w[0]) + '</div>' +
+              '<div class="bz">' + esc(w[1] + ' ' + w[2]) + '</div>' +
+              '<div class="marks">' + (r
+                ? '练' + (r.seen || 0) + ' <b>✓' + (r.ok || 0) + '</b> <i>✕' + (r.bad || 0) + '</i>'
+                : '—') + '</div></div>';
+    }
+    if(!shown) rows = '<p class="build-empty">没有匹配的词。</p>';
+    $('browseRows').innerHTML = rows;
+    $('browseCount').textContent = shown + ' / ' + TOTAL + ' 词';
+    $('browseStats').innerHTML = '<span>练过 ' + seen + '</span><span>错过 ' + miss + '</span>' +
+                                 '<span>累计 ✓ ' + okSum + '</span><span>累计 ✕ ' + badSum + '</span>';
+  }
+
+  if($('bBrowse')) $('bBrowse').addEventListener('click', openBrowse);
+  if($('bBrowseBack')) $('bBrowseBack').addEventListener('click', function(){ renderHome(); });
+  if($('browseFilter')) $('browseFilter').addEventListener('input', renderBrowse);
 
   // ---- 启动 ----
   function initList(){
