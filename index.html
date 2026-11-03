@@ -199,6 +199,18 @@ body.on-done .quiz, body.on-done .home{display:none}
 .nextdue b{color:var(--text)}
 .summary .btnlist{gap:8px; margin-top:10px}
 
+/* ---------- 侧栏看板娘 ---------- */
+.mascot{display:none}
+.mascot .say{font-size:13px; line-height:1.7; color:var(--text-2);
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:11px 14px; margin:0 0 14px; position:relative; text-align:center;
+  box-shadow:var(--shadow)}
+.mascot .say::after{content:''; position:absolute; left:50%; bottom:-7px; width:12px; height:12px;
+  margin-left:-6px; background:var(--surface); border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line); transform:rotate(45deg)}
+.mascot .whale{display:block; width:100%; height:auto; max-width:300px; margin:0 auto}
+.mascot .tiny{font-size:11px; color:var(--text-2); opacity:.65; text-align:center; margin:6px 0 0}
+
 /* ---------- 键位提示 / 提示条 ---------- */
 .keys{display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--text-2); margin-top:1px}
 .keys .warn{color:var(--bad); font-weight:600}
@@ -280,6 +292,35 @@ body.no-list .hint{display:none}
 .swatch{width:30px; height:30px; border-radius:50%; border:2px solid transparent;
   cursor:pointer; padding:0; outline-offset:2px}
 .swatch.on{border-color:var(--text)}
+
+/* 宽屏：左边练，右边看板娘，别浪费横向空间 */
+@media (min-width:1000px){
+  body{align-items:flex-start}
+  .wrap{max-width:1020px; display:grid; grid-template-columns:minmax(0,620px) minmax(240px,1fr);
+    column-gap:48px; row-gap:0; align-items:start; justify-content:center; padding-top:8px}
+  .wrap > *{grid-column:1; min-width:0}
+  header, .bar{grid-column:1 / -1}
+  .mascot{display:block; grid-column:2; grid-row:3; position:sticky; top:20px}
+}
+
+/* 横屏（手机转过来 / 矮窗口）：压扁留白，选项两列 */
+@media (orientation:landscape) and (max-height:560px){
+  body{padding:10px 14px 12px}
+  .wrap{gap:10px}
+  .home{gap:12px}
+  .quiz{gap:10px}
+  .bar{display:none}
+  .word{font-size:clamp(22px,4.6vw,30px)}
+  .ask{margin-top:-2px}
+  .opts{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .opt{padding:12px 13px; font-size:14px; line-height:1.5}
+  .btnlist{gap:8px; margin-top:10px}
+  button{padding:12px 14px}
+  .tile{padding:0 4px}
+  .tile b{font-size:20px}
+  .keys{gap:12px; font-size:11px}
+  .note{padding:9px 12px; font-size:12.5px}
+}
 
 @media (max-width:400px){
   .opt{font-size:14px; padding:12px 13px}
@@ -440,6 +481,36 @@ body.no-list .hint{display:none}
     </div>
   </div>
 
+  <!-- 侧栏：看板娘（宽屏才显示） -->
+  <aside class="mascot" id="mascot">
+    <div class="say" id="mascotSay">今天想练多少词？本鱼陪你。</div>
+    <svg class="whale" viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="whaleBody" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#9db3ff"/>
+          <stop offset="1" stop-color="#6f8bf7"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="140" cy="228" rx="80" ry="11" fill="#000" opacity=".10"/>
+      <path d="M140 78c0-16 12-22 12-34" stroke="#9db3ff" stroke-width="5" fill="none"
+            stroke-linecap="round" opacity=".75"/>
+      <circle cx="156" cy="34" r="6.5" fill="#b9c8ff"/>
+      <circle cx="170" cy="47" r="4" fill="#b9c8ff"/>
+      <ellipse cx="140" cy="150" rx="88" ry="68" fill="url(#whaleBody)"/>
+      <ellipse cx="140" cy="176" rx="62" ry="40" fill="#e9eeff"/>
+      <ellipse cx="58" cy="186" rx="20" ry="12" fill="#5f7bee" transform="rotate(-16 58 186)"/>
+      <ellipse cx="222" cy="186" rx="20" ry="12" fill="#5f7bee" transform="rotate(16 222 186)"/>
+      <ellipse cx="108" cy="136" rx="9.5" ry="11" fill="#1c2340"/>
+      <ellipse cx="172" cy="136" rx="9.5" ry="11" fill="#1c2340"/>
+      <circle cx="111" cy="132" r="3.4" fill="#fff"/>
+      <circle cx="175" cy="132" r="3.4" fill="#fff"/>
+      <ellipse cx="86" cy="158" rx="11" ry="6" fill="#ffb8c6" opacity=".8"/>
+      <ellipse cx="194" cy="158" rx="11" ry="6" fill="#ffb8c6" opacity=".8"/>
+      <path d="M128 166q12 11 24 0" stroke="#1c2340" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </svg>
+    <p class="tiny">DeepSeek · 大肥鱼</p>
+  </aside>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -553,11 +624,18 @@ body.no-list .hint{display:none}
   }
 
   // ---- 首页 ----
+  function mascotSay(t){
+    var el = $('mascotSay');
+    if(el) el.textContent = t;
+  }
+
   function renderHome(){
     var noList = (Object.keys(LISTS).length === 0);
     document.body.className = 'on-home' + (noList ? ' no-list' : '');
     $('cLeft').hidden = $('cOk').hidden = $('cNo').hidden = true;
     $('prog').style.width = '0%';
+    mascotSay(noList ? '还没有词书。选一个文件，或者先下载测试词表试试。'
+                     : '今天想练多少词？本鱼陪你。');
 
     var fresh = 0, seen = 0, miss = 0;
     for(var i=0;i<TOTAL;i++){
@@ -605,6 +683,7 @@ body.no-list .hint{display:none}
     okCount = 0; badCount = 0; firstTryBad = 0; answered = false;
 
     document.body.className = 'on-quiz';
+    mascotSay('别急着翻页，先在脑子里过一遍。');
     $('cLeft').hidden = $('cOk').hidden = $('cNo').hidden = false;
     renderQuestion();
   }
@@ -959,6 +1038,7 @@ body.no-list .hint{display:none}
     var idxs = Object.keys(answeredWords).map(Number);
 
     document.body.className = 'on-done';
+    mascotSay('打完啦，辛苦。要不要再来一轮？');
     var totalQ = okCount + badCount;
     $('sOk').textContent = okCount;
     $('sNo').textContent = badCount;
@@ -1492,6 +1572,7 @@ body.no-list .hint{display:none}
 
   function openBuild(){
     document.body.className = 'on-build';
+    mascotSay('打个单词，回车就加进词表。');
     renderBuild();
     if(DICT.raw) return;
     if(DICT.state === 'loading') return;
@@ -1983,6 +2064,7 @@ body.no-list .hint{display:none}
   function openBrowse(){
     if(!LIST || TOTAL === 0){ toast('先载入词书'); return; }
     document.body.className = 'on-browse';
+    mascotSay('整本词表都在这儿，随便翻。');
     $('browseFilter').value = '';
     renderBrowse();
   }
