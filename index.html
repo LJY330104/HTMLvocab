@@ -123,9 +123,9 @@ body.on-quiz .home{display:none}
 .opt.wrong .num{background:var(--bad); color:var(--surface)}
 .opt.dim{opacity:.42}
 .opt:disabled{cursor:default}
-.opt-more{display:inline-block; margin-left:8px; font-size:11.5px; font-weight:600;
-  color:var(--primary); background:var(--primary-soft); border-radius:999px;
-  padding:1px 9px; white-space:nowrap; cursor:pointer}
+.opt-more{flex:0 0 auto; align-self:flex-start; margin-top:2px; font-size:11.5px;
+  font-weight:600; color:var(--primary); background:var(--primary-soft); border-radius:999px;
+  padding:2px 9px; white-space:nowrap; cursor:pointer}
 .opt.correct .opt-more, .opt.wrong .opt-more{color:inherit; opacity:.75}
 
 /* ---------- 手填释义 ---------- */
@@ -407,7 +407,7 @@ body.no-list .hint{display:none}
             <div class="setlab"><span>「以上都不对」混淆项</span>
               <label class="sw"><input type="checkbox" id="notaChk" checked aria-label="启用以上都不对"><i></i></label>
             </div>
-            <p class="setsub">开启后，四个选项里会混进一个「以上都不对」——它一定不是正确答案。</p>
+            <p class="setsub">开启后，每道题的 D 选项固定变成「以上都不对」——它一定不是正确答案。</p>
           </div>
           <div class="setrow" id="notaRow">
             <div class="setlab"><span>出现频率</span><b id="notaOut">30%</b></div>
@@ -539,8 +539,8 @@ body.no-list .hint{display:none}
       <div class="actrow">
         <button class="tool" id="btnReveal" title="不认识 / 是蒙的 / 手滑了（← 或 F）">
           <b>👀</b><span>不认识</span></button>
-        <button class="tool" id="btnExpand" title="展开所有长选项（Q W E R）">
-          <b>⤢</b><span>展开选项</span></button>
+        <button class="tool" id="btnExpand" title="展开所有长选项（A）">
+          <b>⤢</b><span>全部展开</span></button>
         <button class="tool" id="btnSaveQuick" title="保存进度到词书（连按两下 ↓）">
           <b>💾</b><span>存进度</span></button>
         <button class="tool" id="btnQuit" title="结束这一轮">
@@ -684,13 +684,16 @@ body.no-list .hint{display:none}
       var e = EXTRA[Math.floor(Math.random() * EXTRA.length)];
       picked[Math.floor(Math.random() * picked.length)] = { t: e[0] + ' ' + e[1], correct:false, src:-1 };
     }
-    picked.push({ t: textOf(idx), correct:true, src:idx });
-    // 「以上都不对」混淆项：按设置的概率顶掉一个干扰项，它本身永远不是正确答案
-    if(QS.nota && QS.notaRate > 0 && Math.random() * 100 < QS.notaRate){
-      var slot = Math.floor(Math.random() * 3);
-      picked[slot] = { t: '以上都不对（None of the above）', correct:false, src:-1, nota:true };
+    var notaOn = (QS.nota && QS.notaRate > 0 && Math.random() * 100 < QS.notaRate);
+    // 三个干扰项打乱后，把正确项插进 A~C（开着混淆项时 D 位被占，正确项不能再放 D）
+    var out = shuffle(picked).slice(0, notaOn ? 2 : 3);   // 混淆项占掉 D，就只用 2 个干扰项
+    var slots = notaOn ? 3 : 4;
+    out.splice(Math.floor(Math.random() * slots), 0, { t: textOf(idx), correct:true, src:idx });
+    // 「以上都不对」固定钉在 D（第 4 个），它本身永远不是正确答案
+    if(notaOn){
+      out.push({ t: '以上都不对（None of the above）', correct:false, src:-1, nota:true });
     }
-    return shuffle(picked);
+    return out;
   }
 
   // ---- 首页 ----
@@ -788,31 +791,43 @@ body.no-list .hint{display:none}
 
     expandedOpts = {};
     var html = '';
-    for(var k=0;k<opts.length;k++){
-      html += '<button class="opt" data-k="'+k+'"><span class="num">'+(k+1)+'</span>' +
-              '<span class="txt">'+optInner(k)+'</span></button>';
-    }
+    for(var k=0;k<opts.length;k++){ html += optHTML(k); }
     $('opts').innerHTML = html;
     updateStats();
     updateKeyHints();
   }
 
-  // ---- 长选项：超过 30 字折叠，可展开（点「展开」或按 Q/W/E/R） ----
-  var TRUNC_LEN = 30;
+  // ---- 长选项：超过 40 字折叠，可展开（点右边的「展开」或按 Q/W/E/R，A 全展开） ----
+  var TRUNC_LEN = 40;
   var expandedOpts = {};
 
-  function optInner(k){
+  function optLong(k){ return String(opts[k].t).length > TRUNC_LEN; }
+
+  function optText(k){
     var t = String(opts[k].t);
-    if(t.length <= TRUNC_LEN) return esc(t);
-    if(expandedOpts[k]) return esc(t) + '<span class="opt-more" data-more="' + k + '">⤡ 收起</span>';
-    return esc(t.slice(0, TRUNC_LEN)) + '…<span class="opt-more" data-more="' + k + '">⤢ 展开</span>';
+    if(t.length <= TRUNC_LEN || expandedOpts[k]) return esc(t);
+    return esc(t.slice(0, TRUNC_LEN)) + '…';
+  }
+
+  // 展开键单独一个 flex 子元素，靠右对齐
+  function optMore(k){
+    if(!optLong(k)) return '';
+    return '<span class="opt-more" data-more="' + k + '">' +
+           (expandedOpts[k] ? '⤡ 收起' : '⤢ 展开') + '</span>';
+  }
+
+  function optHTML(k){
+    return '<button class="opt" data-k="'+k+'"><span class="num">'+(k+1)+'</span>' +
+           '<span class="txt">'+optText(k)+'</span>' + optMore(k) + '</button>';
   }
 
   function repaintOpt(k){
     var list = $('opts').querySelectorAll('.opt');
     if(!list || !list[k]) return;
     var el = list[k].querySelector ? list[k].querySelector('.txt') : null;
-    if(el) el.innerHTML = optInner(k);
+    if(el) el.innerHTML = optText(k);
+    var more = list[k].querySelector ? list[k].querySelector('.opt-more') : null;
+    if(more) more.textContent = expandedOpts[k] ? '⤡ 收起' : '⤢ 展开';
   }
 
   function toggleExpand(k){
@@ -958,7 +973,7 @@ body.no-list .hint{display:none}
       var o = opts[chosen];
       html += '<div class="chosen"><b>你选的：</b>' + esc(o.t) +
               (o.nota
-                ? '　<span class="from">（混淆项，正确答案就在上面四个里）</span>'
+                ? '　<span class="from">（混淆项，一定不对——正确答案在 A~C 里）</span>'
                 : o.src >= 0
                   ? '　<span class="from">（其实是 ' + esc(W(o.src)[0]) + ' 的意思）</span>'
                   : '　<span class="from">（这个词库里没有它，纯干扰项）</span>') +
@@ -1070,10 +1085,7 @@ body.no-list .hint{display:none}
 
     // 选项原样恢复，不重新抽干扰项
     var html = '';
-    for(var k=0;k<opts.length;k++){
-      html += '<button class="opt" data-k="'+k+'"><span class="num">'+(k+1)+'</span>' +
-              '<span class="txt">'+optInner(k)+'</span></button>';
-    }
+    for(var k=0;k<opts.length;k++){ html += optHTML(k); }
     $('opts').innerHTML = html;
 
     answered = false;
@@ -1432,7 +1444,7 @@ body.no-list .hint{display:none}
     if(!answered){
       el.innerHTML = '<span><kbd>1</kbd>–<kbd>4</kbd> 选释义</span>' +
                      '<span class="warn"><kbd>←</kbd> 不认识（看答案，记错）</span>' +
-                     '<span><kbd>Q</kbd>–<kbd>R</kbd> 展开选项</span>' +
+                     '<span><kbd>Q</kbd>–<kbd>R</kbd> 展开 · <kbd>A</kbd> 全展开</span>' +
                      '<span><kbd>↓</kbd><kbd>↓</kbd> 存进度</span>';
     } else if(answerState === 'right'){
       el.innerHTML = '<span class="warn"><kbd>←</kbd> 其实是蒙的</span>' +
@@ -1714,7 +1726,10 @@ body.no-list .hint{display:none}
       return;
     }
 
-    var qk = 'qwer'.indexOf(String(k).toLowerCase());
+    var lk = String(k).toLowerCase();
+    if(lk === 'a'){ e.preventDefault(); expandAllOpts(); return; }
+
+    var qk = 'qwer'.indexOf(lk);
     if(qk >= 0){ e.preventDefault(); toggleExpand(qk); return; }
 
     if(k === 'ArrowDown'){
