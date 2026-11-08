@@ -123,8 +123,9 @@ body.on-quiz .home{display:none}
 .opt.wrong .num{background:var(--bad); color:var(--surface)}
 .opt.dim{opacity:.42}
 .opt:disabled{cursor:default}
-.opt-more{display:inline-block; margin-left:6px; font-size:12px; font-weight:600;
-  color:var(--primary); text-decoration:underline; text-underline-offset:3px; opacity:.9}
+.opt-more{display:inline-block; margin-left:8px; font-size:11.5px; font-weight:600;
+  color:var(--primary); background:var(--primary-soft); border-radius:999px;
+  padding:1px 9px; white-space:nowrap; cursor:pointer}
 .opt.correct .opt-more, .opt.wrong .opt-more{color:inherit; opacity:.75}
 
 /* ---------- 手填释义 ---------- */
@@ -174,10 +175,18 @@ button.locked{opacity:.55; cursor:progress}
 .export-btns{display:flex; gap:8px; margin-top:10px}
 .export-btns button{padding:9px 14px; font-size:13px; border-radius:11px}
 .foot{display:flex; gap:10px}
+.quiz .foot{flex-direction:column}
 button.act{flex:1}
-button.mini-save{flex:0 0 auto; padding:14px 12px; font-size:12.5px; font-weight:600;
-  color:var(--text-2); background:var(--surface); border-radius:15px; white-space:nowrap}
-button.mini-save:active{transform:scale(.97)}
+body.on-quiz button.act{width:100%}
+button.tool{flex:1 1 0; display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:9px 4px 8px; font-size:11.5px; font-weight:600; line-height:1.2; border-radius:14px;
+  background:var(--surface); border:1px solid var(--line); color:var(--text-2)}
+button.tool b{font-size:17px; font-weight:400; line-height:1}
+button.tool:active{transform:scale(.97)}
+button.tool:disabled{opacity:.34}
+button.tool.warn{color:var(--bad); border-color:var(--bad-line)}
+button.tool.go{color:var(--primary); border-color:var(--primary-soft)}
+.actrow{display:flex; gap:8px}
 button.act[hidden]{display:none}
 kbd{font:inherit; font-size:11px; font-weight:600; opacity:.55; border:1px solid currentColor;
   border-radius:5px; padding:0 5px; margin-left:6px}
@@ -297,13 +306,49 @@ body.no-list .hint{display:none}
   cursor:pointer; padding:0; outline-offset:2px}
 .swatch.on{border-color:var(--text)}
 
+/* ---------- 答题设置面板 ---------- */
+.hbtns{display:flex; gap:8px; align-items:center; flex:0 0 auto}
+.setanchor{position:relative; display:inline-flex}
+.setpanel{position:absolute; right:0; top:calc(100% + 10px); z-index:40;
+  width:min(310px, calc(100vw - 32px)); padding:15px 16px;
+  display:flex; flex-direction:column; gap:15px; text-align:left;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  box-shadow:var(--shadow)}
+.setpanel[hidden]{display:none}
+.setrow{display:flex; flex-direction:column; gap:7px}
+.setlab{display:flex; align-items:center; justify-content:space-between; gap:10px;
+  font-size:13px; font-weight:600; color:var(--text)}
+.setlab b{font-size:12.5px; font-weight:700; color:var(--primary);
+  font-variant-numeric:tabular-nums; white-space:nowrap}
+.setsub{margin:0; font-size:11.5px; color:var(--text-2); line-height:1.6; opacity:.85}
+.rng{width:100%; height:22px; margin:0; background:none; appearance:none;
+  -webkit-appearance:none; cursor:pointer}
+.rng::-webkit-slider-runnable-track{height:6px; border-radius:999px; background:var(--surface-3)}
+.rng::-webkit-slider-thumb{-webkit-appearance:none; width:18px; height:18px; margin-top:-6px;
+  border:none; border-radius:50%; background:var(--primary); box-shadow:0 1px 4px rgba(0,0,0,.28)}
+.rng::-moz-range-track{height:6px; border-radius:999px; background:var(--surface-3)}
+.rng::-moz-range-thumb{width:18px; height:18px; border:none; border-radius:50%; background:var(--primary)}
+.sw{position:relative; display:inline-flex; flex:0 0 auto; cursor:pointer}
+.sw input{position:absolute; width:0; height:0; opacity:0}
+.sw i{display:block; position:relative; width:42px; height:24px; border-radius:999px;
+  background:var(--surface-3); border:1px solid var(--line);
+  transition:background .15s, border-color .15s}
+.sw i::after{content:''; position:absolute; left:2px; top:2px; width:18px; height:18px;
+  border-radius:50%; background:var(--text-2); transition:transform .16s, background .16s}
+.sw input:checked + i{background:var(--primary-soft); border-color:transparent}
+.sw input:checked + i::after{transform:translateX(18px); background:var(--primary)}
+.setrow.off .rng{opacity:.35; pointer-events:none}
+.setrow.off .setsub{opacity:.5}
+
 /* 宽屏：左边练，右边看板娘，别浪费横向空间 */
 @media (min-width:1000px){
   body{align-items:flex-start}
   .wrap{max-width:1020px; display:grid; grid-template-columns:minmax(0,620px) minmax(240px,1fr);
     column-gap:48px; row-gap:0; align-items:start; justify-content:center; padding-top:8px}
+  /* 顶栏和分割线都只占内容栏：右边那排按钮、分割线、内容右端对齐 */
   .wrap > *{grid-column:1; min-width:0}
-  header, .bar{grid-column:1 / -1}
+  header{row-gap:8px}
+  .bar{margin-top:14px}
   .mascot{display:block; grid-column:2; grid-row:3; position:sticky; top:20px}
 }
 
@@ -320,6 +365,11 @@ body.no-list .hint{display:none}
   .opt{padding:12px 13px; font-size:14px; line-height:1.5}
   .btnlist{gap:8px; margin-top:10px}
   button{padding:12px 14px}
+  .quiz .foot{flex-direction:row; align-items:stretch; gap:8px}
+  body.on-quiz button.act{width:auto; flex:0 0 auto; padding:10px 16px}
+  .actrow{flex:1 1 auto; gap:6px}
+  button.tool{padding:7px 4px 6px; font-size:10.5px}
+  button.tool b{font-size:15px}
   .tile{padding:0 4px}
   .tile b{font-size:20px}
   .keys{gap:12px; font-size:11px}
@@ -343,7 +393,30 @@ body.no-list .hint{display:none}
     <span class="chip" id="cLeft" hidden>剩 0</span>
     <span class="chip good" id="cOk" hidden>✓ 0</span>
     <span class="chip bad" id="cNo" hidden>✕ 0</span>
-    <button class="iconbtn" id="bMode" title="切换亮色 / 暗色" aria-label="切换明暗">☀️</button>
+    <div class="hbtns">
+      <button class="iconbtn" id="bMode" title="切换亮色 / 暗色（M）" aria-label="切换明暗">☀️</button>
+      <div class="setanchor">
+        <button class="iconbtn" id="bSet" title="答题设置" aria-label="答题设置" aria-expanded="false">⚙️</button>
+        <div class="setpanel" id="setPanel" hidden>
+          <div class="setrow">
+            <div class="setlab"><span>答错后等待</span><b id="lockOut">1.5 秒</b></div>
+            <input class="rng" type="range" id="lockRng" min="0.5" max="3" step="0.1" value="1.5"
+                   aria-label="答错后等待时长（秒）">
+          </div>
+          <div class="setrow">
+            <div class="setlab"><span>「以上都不对」混淆项</span>
+              <label class="sw"><input type="checkbox" id="notaChk" checked aria-label="启用以上都不对"><i></i></label>
+            </div>
+            <p class="setsub">开启后，四个选项里会混进一个「以上都不对」——它一定不是正确答案。</p>
+          </div>
+          <div class="setrow" id="notaRow">
+            <div class="setlab"><span>出现频率</span><b id="notaOut">30%</b></div>
+            <input class="rng" type="range" id="notaRng" min="0" max="100" step="5" value="30"
+                   aria-label="以上都不对出现频率">
+          </div>
+        </div>
+      </div>
+    </div>
   </header>
   <div class="bar"><i id="prog"></i></div>
 
@@ -463,8 +536,16 @@ body.no-list .hint{display:none}
     <div class="req" id="req"></div>
     <div class="foot">
       <button class="act primary" id="btnNext" hidden>继续 →</button>
-      <button class="act" id="btnQuit">不练了</button>
-      <button class="mini-save" id="btnSaveQuick" title="保存进度到词书（双击 ↓）">💾 存</button>
+      <div class="actrow">
+        <button class="tool" id="btnReveal" title="不认识 / 是蒙的 / 手滑了（← 或 F）">
+          <b>👀</b><span>不认识</span></button>
+        <button class="tool" id="btnExpand" title="展开所有长选项（Q W E R）">
+          <b>⤢</b><span>展开选项</span></button>
+        <button class="tool" id="btnSaveQuick" title="保存进度到词书（连按两下 ↓）">
+          <b>💾</b><span>存进度</span></button>
+        <button class="tool" id="btnQuit" title="结束这一轮">
+          <b>✕</b><span>不练了</span></button>
+      </div>
     </div>
   </div>
 
@@ -604,6 +685,11 @@ body.no-list .hint{display:none}
       picked[Math.floor(Math.random() * picked.length)] = { t: e[0] + ' ' + e[1], correct:false, src:-1 };
     }
     picked.push({ t: textOf(idx), correct:true, src:idx });
+    // 「以上都不对」混淆项：按设置的概率顶掉一个干扰项，它本身永远不是正确答案
+    if(QS.nota && QS.notaRate > 0 && Math.random() * 100 < QS.notaRate){
+      var slot = Math.floor(Math.random() * 3);
+      picked[slot] = { t: '以上都不对（None of the above）', correct:false, src:-1, nota:true };
+    }
     return shuffle(picked);
   }
 
@@ -718,8 +804,8 @@ body.no-list .hint{display:none}
   function optInner(k){
     var t = String(opts[k].t);
     if(t.length <= TRUNC_LEN) return esc(t);
-    if(expandedOpts[k]) return esc(t) + '<span class="opt-more" data-more="' + k + '">收起</span>';
-    return esc(t.slice(0, TRUNC_LEN)) + '…<span class="opt-more" data-more="' + k + '">展开</span>';
+    if(expandedOpts[k]) return esc(t) + '<span class="opt-more" data-more="' + k + '">⤡ 收起</span>';
+    return esc(t.slice(0, TRUNC_LEN)) + '…<span class="opt-more" data-more="' + k + '">⤢ 展开</span>';
   }
 
   function repaintOpt(k){
@@ -746,9 +832,54 @@ body.no-list .hint{display:none}
   }
 
   // ---- 判定与反馈 ----
-  var LOCK_MS = 2000;                 // 答错后要等的时长
+  var SET_KEY = 'satvocab.quiz.v1';
+  var QS = { lock: 1.5, nota: true, notaRate: 30 };   // 答题设置：等待时长 / 以上都不对 / 出现频率
+  var LOCK_MS = 1500;                 // 答错后要等的时长（跟着设置走）
   var lockTimer = null, lockUntil = 0;
   var answerState = null;             // right / wrong / revealed / guessed
+
+  function clampNum(v, lo, hi, dflt){
+    v = parseFloat(v);
+    if(!isFinite(v)) return dflt;
+    return Math.min(hi, Math.max(lo, v));
+  }
+
+  function loadQuizSet(){
+    var raw = null;
+    try{ raw = localStorage.getItem(SET_KEY); }catch(e){}
+    if(raw){
+      var o = null;
+      try{ o = JSON.parse(raw); }catch(e){ o = null; }
+      if(o && typeof o === 'object'){
+        QS.lock = Math.round(clampNum(o.lock, 0.5, 3, 1.5) * 10) / 10;
+        if(typeof o.nota === 'boolean') QS.nota = o.nota;
+        QS.notaRate = Math.round(clampNum(o.notaRate, 0, 100, 30) / 5) * 5;
+      }
+    }
+    LOCK_MS = Math.round(QS.lock * 1000);
+  }
+
+  function saveQuizSet(){
+    try{ localStorage.setItem(SET_KEY, JSON.stringify(QS)); }catch(e){}
+  }
+
+  function paintSet(){
+    if(!$('lockRng')) return;
+    $('lockRng').value = String(QS.lock);
+    $('lockOut').textContent = QS.lock.toFixed(1) + ' 秒';
+    $('notaChk').checked = !!QS.nota;
+    $('notaRng').value = String(QS.notaRate);
+    $('notaOut').textContent = QS.notaRate + '%';
+    $('notaRow').classList.toggle('off', !QS.nota);
+  }
+
+  function setPanelOpen(open){
+    var p = $('setPanel'), b = $('bSet');
+    if(!p) return;
+    p.hidden = !open;
+    if(b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(open) paintSet();
+  }
 
   function correctIndex(){
     for(var s=0;s<opts.length;s++) if(opts[s].correct) return s;
@@ -774,10 +905,10 @@ body.no-list .hint{display:none}
 
   function tickLock(){
     var b = $('btnNext');
-    var left = Math.ceil((lockUntil - Date.now()) / 1000);
+    var left = Math.ceil(Math.max(0, lockUntil - Date.now()) / 100) / 10;   // 0.1 秒精度
     if(left > 0){
-      b.textContent = '答错了 · ' + left + ' 秒后可继续';
-      lockTimer = setTimeout(tickLock, 120);
+      b.textContent = '答错了 · ' + (left % 1 ? left.toFixed(1) : left) + ' 秒后可继续';
+      lockTimer = setTimeout(tickLock, 100);
     } else {
       b.textContent = '继续 →';
       b.disabled = false;
@@ -826,9 +957,11 @@ body.no-list .hint{display:none}
     if(chosen >= 0){
       var o = opts[chosen];
       html += '<div class="chosen"><b>你选的：</b>' + esc(o.t) +
-              (o.src >= 0
-                ? '　<span class="from">（其实是 ' + esc(W(o.src)[0]) + ' 的意思）</span>'
-                : '　<span class="from">（这个词库里没有它，纯干扰项）</span>') +
+              (o.nota
+                ? '　<span class="from">（混淆项，正确答案就在上面四个里）</span>'
+                : o.src >= 0
+                  ? '　<span class="from">（其实是 ' + esc(W(o.src)[0]) + ' 的意思）</span>'
+                  : '　<span class="from">（这个词库里没有它，纯干扰项）</span>') +
               '</div>';
     }
     html += '<b>' + esc(d[0]) + '</b> ' + esc(d[1]) + ' &nbsp;·&nbsp; ' + esc(d[2]) +
@@ -1063,6 +1196,42 @@ body.no-list .hint{display:none}
 
   $('btnNext').addEventListener('click', next);
   $('btnSaveQuick').addEventListener('click', quickSave);
+  $('btnExpand').addEventListener('click', function(){
+    expandAllOpts();
+    toast('长选项都展开了');
+  });
+  $('btnReveal').addEventListener('click', function(){
+    if(!answered) revealAnswer();
+    else if(answerState === 'right') markAsGuess();
+    else if(answerState === 'wrong' || answerState === 'revealed') undoWrong();
+  });
+
+  // ---- 答题设置：展开/收起 + 两个滑杆 + 开关 ----
+  if($('bSet')) $('bSet').addEventListener('click', function(e){
+    e.stopPropagation();
+    setPanelOpen(!!$('setPanel').hidden);
+  });
+  if($('setPanel')) $('setPanel').addEventListener('click', function(e){ e.stopPropagation(); });
+  document.addEventListener('click', function(){
+    if($('setPanel') && !$('setPanel').hidden) setPanelOpen(false);
+  });
+
+  if($('lockRng')) $('lockRng').addEventListener('input', function(){
+    QS.lock = Math.round(clampNum(this.value, 0.5, 3, 1.5) * 10) / 10;
+    LOCK_MS = Math.round(QS.lock * 1000);
+    if(lockTimer) lockUntil = Date.now() + LOCK_MS;   // 正卡着就按新时长重新计时
+    paintSet(); saveQuizSet(); updateKeyHints();
+  });
+
+  if($('notaChk')) $('notaChk').addEventListener('change', function(){
+    QS.nota = !!this.checked;
+    paintSet(); saveQuizSet();
+  });
+
+  if($('notaRng')) $('notaRng').addEventListener('input', function(){
+    QS.notaRate = Math.round(clampNum(this.value, 0, 100, 30) / 5) * 5;
+    paintSet(); saveQuizSet();
+  });
   $('bAll').addEventListener('click', function(){ start('all'); });
   $('bNew').addEventListener('click', function(){ start('new'); });
   $('btnQuit').addEventListener('click', function(){ finish(); });
@@ -1233,7 +1402,31 @@ body.no-list .hint{display:none}
   }
 
   // ---- 键位提示（跟着状态变） ----
+  function lockSec(){ return (LOCK_MS / 1000).toFixed(1).replace(/\.0$/, ''); }
+
+  function updateRevealBtn(){
+    var b = $('btnReveal');
+    if(!b || !b.querySelector) return;
+    var icon = b.querySelector('b'), lab = b.querySelector('span');
+    if(!icon || !lab) return;
+    b.classList.remove('warn', 'go');
+    if(!answered){
+      icon.textContent = '👀'; lab.textContent = '不认识';
+      b.disabled = false; b.classList.add('warn');
+    } else if(answerState === 'right'){
+      icon.textContent = '🙈'; lab.textContent = '是蒙的';
+      b.disabled = false;
+    } else if(answerState === 'wrong' || answerState === 'revealed'){
+      icon.textContent = '↩'; lab.textContent = '手滑了';
+      b.disabled = false;
+    } else {
+      icon.textContent = '↩'; lab.textContent = '手滑了';
+      b.disabled = true;
+    }
+  }
+
   function updateKeyHints(){
+    updateRevealBtn();
     var el = $('keys');
     if(!el) return;
     if(!answered){
@@ -1246,11 +1439,11 @@ body.no-list .hint{display:none}
                      '<span class="go"><kbd>→</kbd> 继续</span>' +
                      '<span><kbd>↓</kbd><kbd>↓</kbd> 存进度</span>';
     } else if(answerState === 'guessed'){
-      el.innerHTML = '<span class="go"><kbd>→</kbd> 继续（2 秒后）</span>' +
+      el.innerHTML = '<span class="go"><kbd>→</kbd> 继续（' + lockSec() + ' 秒后）</span>' +
                      '<span><kbd>↓</kbd><kbd>↓</kbd> 存进度</span>';
     } else {
       el.innerHTML = '<span class="warn"><kbd>←</kbd> 手滑了，撤销重答</span>' +
-                     '<span class="go"><kbd>→</kbd> 继续（2 秒后）</span>' +
+                     '<span class="go"><kbd>→</kbd> 继续（' + lockSec() + ' 秒后）</span>' +
                      '<span><kbd>↓</kbd><kbd>↓</kbd> 存进度</span>';
     }
   }
@@ -1499,12 +1692,17 @@ body.no-list .hint{display:none}
   });
 
   document.addEventListener('keydown', function(e){
+    var k = e.key;
+    if(k === 'Escape'){ setPanelOpen(false); return; }
+
+    var tag = e.target && e.target.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    if(k === 'm' || k === 'M'){ e.preventDefault(); setMode(isDark() ? 'light' : 'dark'); return; }
+
     var mode = document.body.className;
     if(mode.indexOf('on-build') >= 0 || mode.indexOf('on-browse') >= 0) return;
     if(mode === 'on-home' || mode === 'on-done') return;
-    var tag = e.target && e.target.tagName;
-    if(tag === 'INPUT' || tag === 'TEXTAREA') return;
-    var k = e.key;
 
     if(k >= '1' && k <= '4'){ e.preventDefault(); answer(parseInt(k, 10) - 1); return; }
 
@@ -2099,6 +2297,8 @@ body.no-list .hint{display:none}
 
   (function boot(){
     loadMode();
+    loadQuizSet();
+    paintSet();
     loadSeed();
     markMode();
     loadBuildState();
