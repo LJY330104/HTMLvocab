@@ -225,20 +225,34 @@ window.VOCAB_LISTS = {
 
 界面是普通的卡片风格：浅色卡片 + 细边框 + 柔和投影，没有拟物凹凸。
 
-色板按 **Material 3 的色调规则**从种子色算出来，再以 OKLCH 字面量写死：
+色板按 **Material 3 的 tone 规则**从种子色生成，再以 OKLCH 字面量写死：
 
-| 角色 | 亮色 tone | 暗色 tone |
-|---|---|---|
-| primary | 40 | 80 |
-| primary-container（`--primary-soft`） | 90 | 30 |
-| surface | 99 | 10 |
-| background | 96 | 6 |
-| on-surface（文字） | 12 | 92 |
-| outline（描边） | 84 | 28 |
+| 变量 | Material 3 角色 | 亮色 tone | 暗色 tone |
+|---|---|---|---|
+| `--bg` | background / surface | 97 | 6 |
+| `--surface` | surface-container（卡片） | 100 | 13 |
+| `--surface-2` | surface-container-high（进度条底、数字徽章） | 93 | 21 |
+| `--surface-3` | surface-container-highest（滑杆轨道、开关底） | 89 | 27 |
+| `--text` | on-surface | 10 | 92 |
+| `--text-2` | on-surface-variant | 30 | 80 |
+| `--line` | outline-variant | 80 | 37 |
+| `--primary` | primary | 40 | 80 |
+| `--primary-c` | on-primary | 100（纯白） | 20 |
+| `--primary-soft` | primary-container | 90 | 30 |
+| `--good` | 自定义 success | 36 | 80 |
+| `--good-soft` | success-container | 90 | 30 |
+| `--bad` | error | 40 | 80 |
+| `--bad-soft` | error-container | 90 | 30 |
 
-种子色的色相（269.59）用在所有主色 / 中性色上，彩度按 tone 做钟形收缩，两端降彩度，
-所以同一颗种子色在明暗模式下都保持同一个色相，又不会在极端明度上发灰。
+中性色（surface / text / line）都带一点种子色的色相（269.59），彩度按 tone 做钟形收缩，
+两端降彩度，所以同一颗种子色在明暗模式下都保持同一个色相，又不会在极端明度上发灰。
 成功绿（色相 150）和错误红（色相 25）各用一个固定色相，保证「对/错」的语义不被种子色冲掉。
+
+**刻意偏离规范的地方**（都是为了肉眼能看见）：
+
+- `--line` 暗色用 tone 37，比 M3 的 outline-variant（30）亮一点——1px 细边在小屏上太暗就糊没了。
+- 卡片底色在暗色下比背景亮 7 个 tone（13 vs 6），卡片才从背景里浮出来（M3 的 surface 本身不区分这层）。
+- success 绿不是 M3 的角色，是按种子色的规则额外生成的。
 
 跑 JS 只为了切换 `data-mode`，不再逐像素重算颜色——首屏因此没有颜色跳变。
 

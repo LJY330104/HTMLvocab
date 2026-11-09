@@ -16,32 +16,34 @@
 })();
 </script>
 <style>
-/* 配色写死在这里（种子色 #4d6bfc 经 Material You 主题化），JS 只负责切 data-mode */
+/* 配色写死在这里：种子色 #4d6bfc 按 Material 3 的 tone 规则生成，JS 只负责切 data-mode */
 :root{
-  --bg:oklch(.9655 .0136 269.59); --surface:oklch(.9914 .0120 269.59);
-  --surface-2:oklch(.9310 .0157 269.59); --surface-3:oklch(.8966 .0177 269.59);
-  --text:oklch(.2414 .0177 269.59); --text-2:oklch(.4655 .0278 269.59);
-  --line:oklch(.8621 .0196 269.59);
-  --primary:oklch(.4828 .2056 269.59); --primary-c:oklch(1 0.0827 269.59);
+  /* background / surface-container / outline-variant 等角色，亮色 tone 见 README */
+  --bg:oklch(.9741 .0130 269.59); --surface:oklch(1.0000 .0114 269.59);
+  --surface-2:oklch(.9397 .0152 269.59); --surface-3:oklch(.9052 .0172 269.59);
+  --text:oklch(.2241 .0167 269.59); --text-2:oklch(.3966 .0253 269.59);
+  --line:oklch(.8276 .0214 269.59);
+  --primary:oklch(.4828 .2056 269.59); --primary-c:oklch(1 0 0);
   --primary-soft:oklch(.9138 .1211 269.59);
   --good:oklch(.4483 .1181 150); --good-soft:oklch(.9138 .0723 150);
-  --good-line:oklch(.7586 .1065 150);
-  --bad:oklch(.5000 .1537 25); --bad-soft:oklch(.9310 .0836 25);
-  --bad-line:oklch(.8103 .1184 25);
+  --good-line:oklch(.7414 .1096 150);
+  --bad:oklch(.4828 .1511 25); --bad-soft:oklch(.9138 .0890 25);
+  --bad-line:oklch(.7759 .1270 25);
   --shadow:0 1px 2px rgba(20,28,20,.06), 0 10px 26px rgba(20,28,20,.07);
   --radius:20px;
 }
 :root[data-mode="dark"]{
-  --bg:oklch(.1880 .0146 269.59); --surface:oklch(.2241 .0167 269.59);
-  --surface-2:oklch(.3017 .0209 269.59); --surface-3:oklch(.3534 .0234 269.59);
-  --text:oklch(.9310 .0157 269.59); --text-2:oklch(.7586 .0246 269.59);
-  --line:oklch(.3793 .0246 269.59);
+  /* 暗色：容器比底色亮 6~7 个 tone，描边拉到 outline-variant 的 tone 37，卡片才看得见 */
+  --bg:oklch(.1880 .0146 269.59); --surface:oklch(.2500 .0182 269.59);
+  --surface-2:oklch(.3190 .0218 269.59); --surface-3:oklch(.3707 .0242 269.59);
+  --text:oklch(.9310 .0157 269.59); --text-2:oklch(.8276 .0214 269.59);
+  --line:oklch(.4569 .0275 269.59);
   --primary:oklch(.8276 .1550 269.59); --primary-c:oklch(.3103 .1550 269.59);
   --primary-soft:oklch(.3966 .1835 269.59);
-  --good:oklch(.8276 .0925 150); --good-soft:oklch(.3276 .0962 150);
-  --good-line:oklch(.5259 .1275 150);
-  --bad:oklch(.8276 .1139 25); --bad-soft:oklch(.3793 .1310 25);
-  --bad-line:oklch(.5862 .1592 25);
+  --good:oklch(.8276 .0925 150); --good-soft:oklch(.3966 .1096 150);
+  --good-line:oklch(.6121 .1275 150);
+  --bad:oklch(.8276 .1139 25); --bad-soft:oklch(.3966 .1349 25);
+  --bad-line:oklch(.6379 .1537 25);
   --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px rgba(0,0,0,.4);
   --radius:20px;
 }
@@ -178,6 +180,7 @@ body.on-browse .home{display:none}
 .note b{color:var(--text); font-weight:600}
 .req{font-size:12px; color:var(--bad); font-weight:600; display:none; margin-top:-4px}
 .req.show{display:block}
+.req.ok{color:var(--good)}
 .chosen{background:var(--bad-soft); color:var(--bad); border-radius:10px;
   padding:8px 11px; margin:0 0 9px; font-size:13px; line-height:1.6; text-align:left}
 .chosen b{color:inherit}
@@ -813,7 +816,7 @@ body.no-list .hint{display:none}
     answerState = null;
     $('note').classList.remove('show');
     $('note').innerHTML = '';
-    $('req').classList.remove('show');
+    $('req').classList.remove('show', 'ok');
     $('req').textContent = '';
     $('btnNext').hidden = true;
     $('btnNext').textContent = '继续 →';
@@ -965,9 +968,12 @@ body.no-list .hint{display:none}
                     : '这个词本轮已经错太多次，不再插回，算进今日待复习';
   }
 
-  function showReq(msg){
-    $('req').textContent = msg;
-    $('req').classList.add('show');
+  // 提示条：答对（隔几题复查）走绿色，答错（还错着）走红色
+  function showReq(msg, good){
+    var el = $('req');
+    el.textContent = msg;
+    el.classList.toggle('ok', !!good);
+    el.classList.add('show');
   }
 
   function paintOptions(k){
@@ -1025,7 +1031,7 @@ body.no-list .hint{display:none}
     paintOptions(k);
     $('note').innerHTML = noteHTML(right ? -1 : k);
     $('note').classList.add('show');
-    if(msg) showReq(msg);
+    if(msg) showReq(msg, right);
 
     $('btnNext').hidden = false;
     if(right){ $('btnNext').disabled = false; $('btnNext').textContent = '继续 →'; }
