@@ -75,6 +75,13 @@ body:not(.on-home) .home{display:none}
 .tile.dim b{opacity:.55}
 
 .btnlist{display:flex; flex-direction:column; gap:12px; margin-top:16px}
+
+/* 主页底部：看词表跨两行，右边保存 / 清空，下面一整条选择文件 */
+.homegrid{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin-top:16px}
+.homegrid button{font-size:13.5px; padding:14px 8px; line-height:1.4; text-align:center}
+.homegrid .span2{grid-column:span 2}
+.homegrid .va{grid-row:span 2; flex-direction:column; gap:2px}
+.homegrid .sub{display:block; font-size:11.5px; font-weight:500; opacity:.7}
 button{
   font:inherit; font-weight:600; font-size:15px; border:1px solid var(--line);
   background:var(--surface); color:var(--text); padding:16px 18px; border-radius:16px;
@@ -386,6 +393,8 @@ body.no-list .hint{display:none}
 
 @media (max-width:400px){
   .opt{font-size:14px; padding:12px 13px}
+  .homegrid button{font-size:12.5px; padding:12px 6px}
+  .homegrid .sub{font-size:10.5px}
   kbd{display:none}
 }
 @media (prefers-reduced-motion:reduce){ *{transition-duration:.01ms !important} }
@@ -437,7 +446,6 @@ body.no-list .hint{display:none}
       <p class="empty-t">还没有载入词书</p>
       <p class="empty-s">选一个 .js 词书文件开始。<br>只在本地读取，不会上传任何内容。</p>
       <button class="primary" id="bLoad2">选择词书文件</button>
-      <button class="linkbtn" id="bTest0">⬇ 还没有词书？先下载测试词表（10 词）</button>
     </div>
 
     <div class="loaded-only">
@@ -450,13 +458,6 @@ body.no-list .hint{display:none}
     <div class="btnlist">
       <button class="primary" id="bAll">全部打乱来一轮 <span class="sub" id="sAll"></span></button>
       <button id="bNew">只练还没练过的 <span class="sub" id="sNew"></span></button>
-      <button id="bBrowse">📋 看词表 <span class="sub" id="sBrowse"></span></button>
-      <button id="bSave">💾 一键保存进度到词书</button>
-      <button id="bLoad">📂 选择本地词书文件（.js）</button>
-      <input type="file" id="fileInput" accept=".js,.json,.txt,text/javascript,application/javascript" hidden>
-      <button class="linkbtn" id="bTest1">⬇ 下载测试词表（10 词 · 六年级）</button>
-      <button class="linkbtn" id="bExport">复制进度文本（手动粘贴用）</button>
-      <button class="linkbtn" id="bReset">清空我这本词库的进度</button>
     </div>
     </div>
 
@@ -464,26 +465,18 @@ body.no-list .hint{display:none}
       <button id="bBuild">✏️ 创建词库 <span class="sub">内置 77 万词英汉词典</span></button>
     </div>
 
-    <p class="hint">
-      答错的词会当场插回后面第 4、8、16 题，答对的词也会在 10 题后再考一次确认。
-      没有跨天的复习计划——练几轮、什么时候练，全看你自己的节奏。
-    </p>
-
-    <div class="export" id="exportBox" hidden>
-      <p class="export-tip">
-        把下面整段追加到<b>你那个词书文件的末尾</b>（比如 <code>lists/list13-14.js</code>）。
-        进度就写在那份词表里了——以后改 <code>index.html</code>、换电脑、清浏览器记录，进度都不会动。
-        页面每次启动会读它，并且和浏览器里的记录取更新的那份。
-      </p>
-      <textarea id="exportText" readonly spellcheck="false"></textarea>
-      <div class="export-btns">
-        <button id="bCopy">复制</button>
-        <button id="bClose">收起</button>
-      </div>
+    <div class="loaded-only">
+    <div class="homegrid">
+      <button class="va" id="bBrowse">📋 看词表<span class="sub" id="sBrowse"></span></button>
+      <button id="bSave">💾 保存进度</button>
+      <button id="bReset">🗑 清空进度</button>
+      <button class="span2" id="bLoad">📂 选择本地词书文件（.js）</button>
     </div>
+    </div>
+    <input type="file" id="fileInput" accept=".js,.json,.txt,text/javascript,application/javascript" hidden>
 
     <p class="footnote">
-      本页代码以 <b>MIT 协议</b>开源 · © 2026 LJY330104<br>
+      本页代码以 <b>MIT 协议</b>开源 · © 2026 Yazakura<br>
       内置英汉词典来自 <b>ECDICT</b>（MIT · © 2025 Linwei · 77 万词条）<br>
       纯本地运行，不联网、不上传任何数据
     </p>
@@ -721,7 +714,7 @@ body.no-list .hint{display:none}
     document.body.className = 'on-home' + (noList ? ' no-list' : '');
     $('cLeft').hidden = $('cOk').hidden = $('cNo').hidden = true;
     $('prog').style.width = '0%';
-    mascotSay(noList ? '还没有词书。选一个文件，或者先下载测试词表试试。'
+    mascotSay(noList ? '还没有词书。点「选择本地词书文件」载入一本吧。'
                      : '今天想练多少词？本鱼陪你。');
 
     var fresh = 0, seen = 0, miss = 0;
@@ -1556,25 +1549,7 @@ body.no-list .hint{display:none}
   $('bSave').addEventListener('click', saveProgressToFile);
   $('bSave2').addEventListener('click', saveProgressToFile);
 
-  // ---- 内置测试词表：一键下载成 .js 词书 ----
-  var TEST_BANK = {
-    id: 'test',
-    title: '测试词表（10 词 · 六年级）',
-    words: [
-      ['borrow', 'v.', '借（入），借用', 'borrow a book from the library 从图书馆借书；borrow 借入 / lend 借出'],
-      ['discover', 'v.', '发现，发觉', 'discover a new planet 发现一颗新行星'],
-      ['refuse', 'v.', '拒绝，不愿', 'refuse to do sth 拒绝做某事；与 accept 相对'],
-      ['prepare', 'v.', '准备，预备', 'prepare for the exam 为考试做准备'],
-      ['journey', 'n.', '旅程，旅行（多指陆路长途）', 'a long journey 一段长途旅行'],
-      ['weather', 'n.', '天气', "What's the weather like today? 今天天气怎么样"],
-      ['curious', 'adj.', '好奇的；奇怪的', 'be curious about sth 对某事好奇'],
-      ['honest', 'adj.', '诚实的，正直的', 'to be honest 说实话'],
-      ['gentle', 'adj.', '温和的，轻柔的', 'a gentle voice 温柔的嗓音'],
-      ['brave', 'adj.', '勇敢的，无畏的', 'be brave enough to do sth 敢于做某事']
-    ]
-  };
-
-  // 把一本词书序列化成 .js 文本（创建词库 / 测试词表共用）
+  // 把一本词书序列化成 .js 文本（创建词库导出用）
   function emitBankFile(id, title, words){
     var out = [];
     out.push('window.VOCAB_LISTS = {');
@@ -1590,13 +1565,6 @@ body.no-list .hint{display:none}
     out.push('};');
     out.push('');
     return out.join('\n');
-  }
-
-  function buildTestBankFile(){
-    return '/* ===== 测试词表（10 词 · 六年级难度） ===== */\n' +
-           '/* 由页面一键下载得到；在首页「选择本地词书文件」里选它就能练 */\n' +
-           '/* 也可以当新词书的模板：照着改 id / title / words */\n\n' +
-           emitBankFile(TEST_BANK.id, TEST_BANK.title, TEST_BANK.words);
   }
 
   // 真·一键：优先弹系统保存框（Chrome / Edge），否则退回下载
@@ -1619,43 +1587,7 @@ body.no-list .hint{display:none}
     }
   }
 
-  function downloadTestBank(){
-    saveTextAs(buildTestBankFile(), 'test.js',
-               '测试词表已保存 ✓ 再用「选择本地词书文件」把它载进来');
-  }
 
-  $('bTest0').addEventListener('click', downloadTestBank);
-  $('bTest1').addEventListener('click', downloadTestBank);
-
-  // ---- 备用：复制进度文本 ----
-  function buildProgressSnippet(){
-    var snap = {};
-    for(var w in prog){ if(Object.prototype.hasOwnProperty.call(prog, w)) snap[w] = prog[w]; }
-    return '/* ===== 进度快照（粘贴到词书文件末尾） ===== */\n' +
-           'window.VOCAB_PROGRESS = window.VOCAB_PROGRESS || {};\n' +
-           'window.VOCAB_PROGRESS[' + JSON.stringify(listId) + '] = ' + JSON.stringify(snap) + ';\n';
-  }
-
-  $('bExport').addEventListener('click', function(){
-    var ta = $('exportText');
-    ta.value = buildProgressSnippet();
-    $('exportBox').hidden = false;
-    ta.focus();
-    ta.select();
-  });
-
-  $('bCopy').addEventListener('click', function(){
-    var ta = $('exportText'), done = false;
-    ta.select();
-    try{ done = document.execCommand('copy'); }catch(e){ done = false; }
-    if(!done && navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(ta.value).catch(function(){});
-    }
-    $('bCopy').textContent = '已复制 ✓';
-    setTimeout(function(){ $('bCopy').textContent = '复制'; }, 1600);
-  });
-
-  $('bClose').addEventListener('click', function(){ $('exportBox').hidden = true; });
 
   // ---- 选择本地词书文件 ----
   function refreshListSelect(){
