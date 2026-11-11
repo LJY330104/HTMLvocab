@@ -1,6 +1,7 @@
 # HTML 词汇复习
 
 一个纯本地、单文件的背单词小工具。双击 `index.html` 就能用，不用装任何东西、不用联网、不用起服务器。
+（可选功能「发音」的离线语音文件放在 `tts/`，跟 `dict/` 一个道理：备好就完全不出网。）
 
 ```
 HTMLvocab/
@@ -11,8 +12,10 @@ HTMLvocab/
 ├── dict/
 │   ├── ecdict.js         ← 内置英汉词典（77 万词条，约 50MB，点「创建词库」才加载）
 │   └── LICENSE-ECDICT    ← ECDICT 的 MIT 许可原文
+├── tts/                  ← 发音引擎 + 语音模型（约 101MB，点「加载」才用；由脚本生成）
 ├── tools/
-│   └── build_dict.py     ← 重新生成 dict/ecdict.js 用的脚本
+│   ├── build_dict.py     ← 重新生成 dict/ecdict.js 用的脚本
+│   └── fetch_tts.sh      ← 下载 / 本地化 tts/ 里那些文件
 ├── LICENSE               ← 本项目的 MIT 许可
 └── README.md             ← 就是这份说明
 ```
@@ -40,6 +43,7 @@ HTMLvocab/
 | `Q` `W` `E` `R` | 选项被折叠时 | 展开/收起第 1~4 个选项（和点选项右边的「⤢ 展开」一样） |
 | `5` | 选项被折叠时 | 一次全部展开 |
 | `↓` `↓` | 练的时候随时 | **连按两下** → 一键保存进度到词书（等于点「💾 存进度」） |
+| `·` | 练的时候 | 读当前单词（反引号那个键；中文输入法下正好打出 `·`）。要先在设置里加载发音 |
 | `M` | 任何时候 | 切换亮色 / 暗色（等于点右上角 ☀️ / 🌙） |
 | `Esc` | 设置面板开着时 | 收起设置面板 |
 
@@ -51,6 +55,7 @@ HTMLvocab/
 | 👀 不认识 / 🙈 是蒙的 / ↩ 手滑了 | `←` / `F` | 同一个按钮，字会跟着状态变 |
 | ⤢ 全部展开 | `5`（单开某个：`Q` `W` `E` `R`，或点选项右边那个 `⤢ 展开`） | 把所有折叠的长选项一次全展开 |
 | 💾 存进度 | `↓` `↓` | 中途存一次 |
+| 🔊 发音 | `·` | 单词右边那个喇叭。模型没加载时是灰的、点不动 |
 | ✕ 不练了 | — | 直接结束这一轮，进结算 |
 
 几条规则：
@@ -255,6 +260,71 @@ window.VOCAB_LISTS = {
 - success 绿不是 M3 的角色，是按种子色的规则额外生成的。
 
 跑 JS 只为了切换 `data-mode`，不再逐像素重算颜色——首屏因此没有颜色跳变。
+
+## 发音（离线 TTS）
+
+单词右边有个 🔊，按 `·` 也行。语音**全部在浏览器里合成**，不上传任何东西：
+
+- 引擎是 [Piper / VITS](https://github.com/rhasspy/piper) 的 WebAssembly 版
+  （[`@diffusionstudio/vits-web`](https://www.npmjs.com/package/@diffusionstudio/vits-web) +
+  [onnxruntime-web](https://onnxruntime.ai/)），模型和推理都在本机跑。
+- 设置面板里的 **发音 → 加载** 才会去取文件，合计约 **100 MB**：
+  语音模型 `en_US-hfc_female-medium`（61 MB，存进 OPFS）、音素数据（18 MB）、
+  ONNX 运行时（21 MB）、引擎 JS（0.7 MB）。**不点加载，一个字节都不会下。**
+- 加载完成后模型留在本机，**断网也能读**；换浏览器 / 清站点数据要重新点一次加载。
+  下次打开页面会自动确认模型还在，所以在就直接可用（`satvocab.tts.v1` 记着开关状态）。
+- 加载前：🔊、「随题目自动播放」开关都是**灰度不可用**；加载后自动恢复正常。
+- 合成过的词会以 `Blob` 缓存在内存里（最多 80 个），同一个词第二次是零延迟。
+
+### 文件都在本地（像词典那样）
+
+`tools/fetch_tts.sh` 把所有东西下到 `tts/`，下完页面就一个外链都不碰：
+
+```
+tts/
+├── vits-web.js                14 KB   引擎入口（脚本会把里面 3 个外链改成本地路径）
+├── piper-DeOu3H9E.js         128 KB   音素化模块（espeak 的 wasm 胶水）
+├── ort.min.js                528 KB   onnxruntime-web 的 ESM 构建
+├── ort/ort-wasm-simd.wasm    10 MB    推理后端
+├── ort/ort-wasm-simd-threaded.wasm   10 MB   （跨源隔离时才用得上，留着保险）
+├── piper/piper_phonemize.wasm 0.6 MB
+├── piper/piper_phonemize.data  18 MB   espeak 的音素/词典数据
+└── models/en/en_US/hfc_female/medium/
+    ├── en_US-hfc_female-medium.onnx       61 MB
+    └── en_US-hfc_female-medium.onnx.json
+```
+
+```bash
+bash tools/fetch_tts.sh          # 断点续传 + 重试，国内默认走 hf-mirror.com
+HF_BASE=https://huggingface.co bash tools/fetch_tts.sh   # 想直连
+```
+
+- 换音色：改 `index.html` 里的 `TTS_VOICE`，再重跑脚本（脚本会从 `index.html` 读音色 id）。
+- 页面优先加载 `./tts/vits-web.js`；**没有这个目录时自动退回 CDN**，所以你可以选择不把 100MB
+  提交进仓库（加进 `.gitignore`，让部署流水线跑脚本），代价是退回到联网。
+- `tts/` 里的东西都是 MIT / Apache-2.0 的发布物（Piper 权重、onnxruntime-web、vits-web），可以随站点一起发。
+
+### 部署注意
+
+- **ES module 不能从 `file://` 加载**。双击打开 `index.html` 时其余功能照旧，但「加载」会失败并提示
+  （会自动退到 CDN 试一次）。要用发音就起个本地服务器或直接部署：
+  ```bash
+  python3 -m http.server 8000   # 然后开 http://localhost:8000
+  ```
+- **不用配 COOP/COEP**。`vits-web` 默认把 wasm 线程数设成 CPU 核数，多线程 wasm 需要
+  `Cross-Origin-Opener-Policy` + `Cross-Origin-Embedder-Policy`（GitHub Pages 这类静态托管给不了），
+  所以页面在合成期间把 `navigator.hardwareConcurrency` 临时压成 `1`，强制单线程。
+  单词合成一次几百毫秒，够用。
+- **需要浏览器支持 import map + OPFS**：Chrome/Edge 89+、Safari 16.4+、Firefox 108+。
+  import map 只给「退回 CDN」那条路用（CDN 版的 vits-web 里有裸导入 `onnxruntime-web`）。
+- 换音色改 `index.html` 里的 `TTS_VOICE`（比如 `en_US-lessac-medium`、`en_GB-alan-medium`），
+  可用列表见 [`@diffusionstudio/vits-web`](https://www.npmjs.com/package/@diffusionstudio/vits-web) 的 voice 表。
+  **手机上嫌慢/嫌大**可以换成 `low` 档（如 `en_US-amy-low`，模型 ~28 MB，音色差一点但合成快得多）；
+  `high` 档音色最好，但模型 100 MB 起，不建议移动端。
+- 每个新词第一次合成要重新建一次推理会话（几十毫秒到一两秒，看设备），所以同一轮的重复词靠内存缓存，
+  不会重复算。合成期间 🔊 会变成呼吸态；wasm 是单线程跑的，个别机器上出题那一下可能有一点点顿。
+- 模型是 MIT 许可（Piper 官方发布的权重），可公开部署。**别用 macOS `say` 生成的音频上线**——
+  Apple 系统语音没有转载授权。
 
 ## 布局（宽屏 / 横屏）
 

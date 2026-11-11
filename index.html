@@ -15,6 +15,9 @@
   document.documentElement.setAttribute('data-mode', m);
 })();
 </script>
+<script type="importmap">
+{ "imports": { "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/esm/ort.min.js" } }
+</script>
 <style>
 /* 配色写死在这里：种子色 #4d6bfc 按 Material 3 的 tone 规则生成，JS 只负责切 data-mode */
 :root{
@@ -181,6 +184,20 @@ body.on-browse .home{display:none}
 .req{font-size:12px; color:var(--bad); font-weight:600; display:none; margin-top:-4px}
 .req.show{display:block}
 .req.ok{color:var(--good)}
+
+/* 发音按钮：没加载模型时是灰的、点不动 */
+.spk{width:36px; height:36px; padding:0; border-radius:11px; font-size:17px; line-height:1;
+  background:var(--surface); border:1px solid var(--line); color:var(--text-2);
+  display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+  align-self:center; cursor:pointer; transition:filter .15s, opacity .15s, transform .1s}
+.spk:active:not(:disabled){transform:scale(.94)}
+.spk.off{filter:grayscale(1); opacity:.45; cursor:not-allowed}
+.spk.busy{opacity:.75; animation:spkPulse .9s ease-in-out infinite}
+@keyframes spkPulse{50%{opacity:.3}}
+.minibtn{padding:6px 13px; font-size:12.5px; font-weight:650; border-radius:999px;
+  background:var(--primary-soft); color:var(--primary); border:1px solid transparent; flex:0 0 auto}
+.minibtn:disabled{opacity:.5}
+.sw.off{filter:grayscale(1); opacity:.45; pointer-events:none}
 .chosen{background:var(--bad-soft); color:var(--bad); border-radius:10px;
   padding:8px 11px; margin:0 0 9px; font-size:13px; line-height:1.6; text-align:left}
 .chosen b{color:inherit}
@@ -334,6 +351,7 @@ body.no-list .hint{display:none}
 .setanchor{position:relative; display:inline-flex}
 .setpanel{position:absolute; right:0; top:calc(100% + 10px); z-index:40;
   width:min(310px, calc(100vw - 32px)); padding:15px 16px;
+  max-height:min(74vh, 560px); overflow-y:auto; overscroll-behavior:contain;
   display:flex; flex-direction:column; gap:15px; text-align:left;
   background:var(--surface); border:1px solid var(--line); border-radius:16px;
   box-shadow:var(--shadow)}
@@ -444,6 +462,18 @@ body.no-list .hint{display:none}
                      aria-label="以上都不对出现频率">
             </div>
           </div>
+          <div class="setrow setgroup">
+            <div class="setlab"><span>发音（Piper 离线语音）</span>
+              <button class="minibtn" id="ttsLoad">加载</button>
+            </div>
+            <p class="setsub" id="ttsState">未加载 · 约 100 MB，只下一次</p>
+            <div class="setrow off" id="autoRow">
+              <div class="setlab"><span>随题目自动播放</span>
+                <label class="sw off" id="autoSw"><input type="checkbox" id="autoSay" checked disabled
+                       aria-label="随题目自动播放"><i></i></label>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -546,6 +576,7 @@ body.no-list .hint{display:none}
   <div class="quiz">
     <div class="qhead">
       <div class="word" id="w">—</div>
+      <button class="spk off" id="bSay" disabled title="读这个词（·）" aria-label="朗读单词">🔊</button>
       <div class="pos" id="pos">—</div>
       <div class="retry" id="retry" hidden>重来 ×2</div>
     </div>
@@ -808,6 +839,7 @@ body.no-list .hint{display:none}
     renderOpts();
     updateStats();
     updateKeyHints();
+    if(TTS.ready && TTS.auto) speakWord(d[0]);
   }
 
   // 回到「还没答」的状态：清掉反馈、插回提示、继续按钮
@@ -1236,6 +1268,178 @@ body.no-list .hint{display:none}
     QS.notaRate = Math.round(clampNum(this.value, 0, 100, 30) / 5) * 5;
     paintSet(); saveQuizSet();
   });
+
+  // ================= 发音：Piper / VITS 全在浏览器里跑（离线、无服务器） =================
+  // 文件都在 tts/ 里（tools/fetch_tts.sh 生成），页面只从自己站点取：
+  // 模型 61 MB（存进 OPFS）+ 音素数据 18 MB + ONNX 运行时 21 MB + 引擎 0.7 MB。
+  // 之后断网也能读，词不会上传到任何地方。
+  // 优先用仓库里的 tts/（跟 dict/ 一样自托管，跑过 tools/fetch_tts.sh 就有）；
+  // 没有那份文件时退回 CDN，双击打开 file:// 也能试，但模块加载会被浏览器拦。
+  var TTS_LOCAL = './tts/vits-web.js';
+  var TTS_CDN = 'https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/dist/vits-web.js';
+  var TTS_VOICE = 'en_US-hfc_female-medium';   // 想换音色改这里，见 piper 的 voice 列表
+  var TTS_KEY = 'satvocab.tts.v1';
+  var TTS_MAX = 80;                            // 内存里最多缓存多少个词
+  // 1 帧静音，用来在点击手势里「解锁」音频通道（iOS 上播放要用户手势）
+  var TTS_SILENT = 'data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAACAgICAgICAgA==';
+
+  var TTS = { mod:null, ready:false, loading:false, saying:0, auto:true, prev:false,
+              msg:'', dl:{}, cache:{}, order:[], seq:0 };
+  var SPK = null;
+
+  function ttsSave(){
+    try{ localStorage.setItem(TTS_KEY, JSON.stringify({ auto:!!TTS.auto, loaded:!!TTS.ready })); }catch(e){}
+  }
+  function ttsLoadPrefs(){
+    try{
+      var o = JSON.parse(localStorage.getItem(TTS_KEY) || 'null');
+      if(o && typeof o === 'object'){
+        TTS.auto = o.auto !== false;
+        TTS.prev = !!o.loaded;    // 上次加载过：启动时悄悄确认一下 OPFS 里还在不在
+      }
+    }catch(e){}
+  }
+
+  function paintTTS(){
+    var ready = TTS.ready, loading = TTS.loading;
+    var b = $('bSay');
+    b.disabled = !ready;
+    b.classList.toggle('off', !ready);
+    b.classList.toggle('busy', ready && TTS.saying > 0);
+    $('autoSay').disabled = !ready;
+    $('autoSay').checked = !!TTS.auto;
+    $('autoRow').classList.toggle('off', !ready);
+    $('autoSw').classList.toggle('off', !ready);
+    var lb = $('ttsLoad');
+    lb.disabled = loading || ready;
+    lb.textContent = loading ? '加载中…' : (ready ? '已加载' : '加载');
+    var st = $('ttsState');
+    if(loading) st.textContent = TTS.msg || '正在载入语音引擎…';
+    else if(ready) st.textContent = '已就绪 · 断网也能读，词不会上传到任何地方';
+    else st.textContent = '未加载 · 约 100 MB，只下一次';
+  }
+
+  function ttsProgress(p){
+    var d = TTS.dl[p.url];
+    if(!d){ d = TTS.dl[p.url] = { loaded:0, total:0 }; }
+    d.loaded = p.loaded; d.total = p.total;
+    var l = 0, t = 0;
+    for(var k in TTS.dl){ if(TTS.dl.hasOwnProperty(k)){ l += TTS.dl[k].loaded; t += TTS.dl[k].total; } }
+    if(t){
+      TTS.msg = '下载 ' + Math.round(l * 100 / t) + '% · ' +
+                (l / 1048576).toFixed(1) + ' / ' + (t / 1048576).toFixed(1) + ' MB';
+      paintTTS();
+    }
+  }
+
+  // vits-web 把 wasm 线程数设成 hardwareConcurrency，多线程 wasm 需要 COOP/COEP 跨源隔离，
+  // 普通静态托管没有那两个响应头，会直接报 SharedArrayBuffer 不可用。合成期间压成单线程。
+  function ttsPredict(text){
+    var had = null;
+    try{ had = Object.getOwnPropertyDescriptor(navigator, 'hardwareConcurrency'); }catch(e){}
+    try{ Object.defineProperty(navigator, 'hardwareConcurrency', { configurable:true, get:function(){ return 1; } }); }catch(e){}
+    function restore(){
+      try{
+        if(had) Object.defineProperty(navigator, 'hardwareConcurrency', had);
+        else delete navigator.hardwareConcurrency;
+      }catch(e){}
+    }
+    return TTS.mod.predict({ text:text, voiceId:TTS_VOICE }).then(function(b){
+      restore(); return b;
+    }, function(err){
+      restore(); throw err;
+    });
+  }
+
+  function ttsUnlock(){
+    if(SPK) return;
+    try{ SPK = new Audio(TTS_SILENT); var p = SPK.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+  }
+
+  function ttsPlay(url){
+    if(!SPK) SPK = new Audio();
+    try{ SPK.pause(); }catch(e){}
+    SPK.src = url;
+    try{ SPK.currentTime = 0; }catch(e){}
+    var p = SPK.play();
+    if(p && p.catch) p.catch(function(){});
+  }
+
+  function ttsCachePut(word, url){
+    TTS.cache[word] = url;
+    TTS.order.push(word);
+    while(TTS.order.length > TTS_MAX){
+      var old = TTS.order.shift();
+      try{ URL.revokeObjectURL(TTS.cache[old]); }catch(e){}
+      delete TTS.cache[old];
+    }
+  }
+
+  function speakWord(word){
+    if(!TTS.ready || !word) return;
+    var key = String(word).toLowerCase();
+    if(TTS.cache[key]){ ttsPlay(TTS.cache[key]); return; }
+    var my = ++TTS.seq;
+    TTS.saying++;
+    paintTTS();
+    ttsPredict(word).then(function(blob){
+      var url = URL.createObjectURL(blob);
+      ttsCachePut(key, url);
+      if(my === TTS.seq) ttsPlay(url);          // 连点几个词时只读最后一个
+    }).catch(function(err){
+      if(my === TTS.seq) toast('没能读出来：' + ((err && err.message) || '合成失败'));
+    }).then(function(){
+      TTS.saying = Math.max(0, TTS.saying - 1);
+      paintTTS();
+    });
+  }
+
+  function ttsLib(){
+    if(TTS.mod) return Promise.resolve(TTS.mod);
+    return import(TTS_LOCAL).catch(function(){ return import(TTS_CDN); })
+      .then(function(m){ TTS.mod = m; return m; });
+  }
+
+  function ttsLoadModel(){
+    if(TTS.ready || TTS.loading) return;
+    if(!navigator.storage || !navigator.storage.getDirectory){
+      TTS.msg = '加载失败：这个浏览器不支持 OPFS，模型没地方存';
+      paintTTS(); toast('浏览器不支持本地文件存储');
+      return;
+    }
+    TTS.loading = true; TTS.msg = '正在载入语音引擎…'; paintTTS();
+    ttsLib().then(function(mod){
+      return mod.stored().then(function(have){
+        if(have && have.indexOf(TTS_VOICE) >= 0) return null;   // 上次存过了，不用再下
+        TTS.dl = {}; TTS.msg = '正在下载语音模型…'; paintTTS();
+        return mod.download(TTS_VOICE, ttsProgress);
+      });
+    }).then(function(){
+      TTS.msg = '正在准备语音引擎…（第一次要下音素数据）'; paintTTS();
+      return ttsPredict('hello');                // 预热：把音素数据和运行时也拉下来
+    }).then(function(){
+      TTS.loading = false; TTS.ready = true; TTS.msg = '';
+      ttsSave(); paintTTS(); updateKeyHints();
+      toast('发音已就绪：点 🔊 或按 · 就能读');
+    }).catch(function(err){
+      TTS.loading = false;
+      var m = (err && err.message) || '';
+      if(/resolve module specifier|import map/i.test(m)) m = '这个浏览器不支持 import map，换个新版浏览器';
+      else if(/fetch|network|404|Failed|Load failed/i.test(m)) m = '下载失败，网络或本地 tts/ 文件有问题';
+      else if(!m) m = '网络或浏览器不支持';
+      if(location.protocol === 'file:') m += '（双击打开时浏览器不让加载模块，起个本地服务器就正常）';
+      TTS.msg = '加载失败：' + m;
+      paintTTS();
+      toast('发音加载失败，设置里有原因');
+    });
+  }
+
+  $('ttsLoad').addEventListener('click', function(){ ttsUnlock(); ttsLoadModel(); });
+  $('bSay').addEventListener('click', function(){
+    ttsUnlock();
+    if(TTS.ready && LIST && cur >= 0) speakWord(W(cur)[0]);
+  });
+  $('autoSay').addEventListener('change', function(){ TTS.auto = !!this.checked; ttsSave(); });
   $('bAll').addEventListener('click', function(){ start('all'); });
   $('bNew').addEventListener('click', function(){ start('new'); });
   $('btnQuit').addEventListener('click', finish);
@@ -1324,6 +1528,7 @@ body.no-list .hint{display:none}
     if(!answered){
       h = '<span><kbd>1</kbd>–<kbd>4</kbd> 选释义</span>' +
           '<span class="warn"><kbd>←</kbd> 不认识（看答案，记错）</span>' +
+          (TTS.ready ? '<span><kbd>·</kbd> 发音</span>' : '') +
           '<span><kbd>Q</kbd>–<kbd>R</kbd> 展开 · <kbd>5</kbd> 全展开</span>';
     } else if(answerState === 'right'){
       h = '<span class="warn"><kbd>←</kbd> 其实是蒙的</span>' +
@@ -1497,6 +1702,14 @@ body.no-list .hint{display:none}
     var mode = document.body.className;
     if(mode.indexOf('on-build') >= 0 || mode.indexOf('on-browse') >= 0) return;
     if(mode === 'on-home' || mode === 'on-done') return;
+
+    // ·（反引号键，中文输入法下就是 ·）→ 读当前单词
+    if(e.code === 'Backquote' || k === '·' || k === '`'){
+      e.preventDefault();
+      if(!TTS.ready) toast('先在设置里加载发音模型');
+      else if(LIST && cur >= 0) speakWord(W(cur)[0]);
+      return;
+    }
 
     if(k >= '1' && k <= '4'){ e.preventDefault(); answer(parseInt(k, 10) - 1); return; }
 
@@ -2067,7 +2280,19 @@ body.no-list .hint{display:none}
     markMode();
     loadQuizSet();
     paintSet();
+    ttsLoadPrefs();
+    paintTTS();
     loadBuildState();
+
+    // 上次加载过的话，悄悄确认 OPFS 里的模型还在（清了就退回「未加载」）
+    if(TTS.prev){
+      ttsLib().then(function(mod){
+        return mod.stored();
+      }).then(function(have){
+        if(have && have.indexOf(TTS_VOICE) >= 0){ TTS.ready = true; paintTTS(); }
+        else { TTS.prev = false; ttsSave(); }
+      }).catch(function(){});
+    }
 
     try{
       if(window.matchMedia){
