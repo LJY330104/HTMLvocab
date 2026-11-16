@@ -137,7 +137,8 @@ body.on-quiz .home{display:none}
   transition:transform .09s, background .16s, border-color .16s, color .16s;
 }
 .opt .txt{flex:1 1 auto; text-align:left}
-.opt:hover:not(:disabled){border-color:var(--primary)}
+/* 只有还没作答时，悬停才是「可点」的信号；判定后不能让蓝色描边盖住绿/红 */
+.opts:not(.done) .opt:hover:not(:disabled){border-color:var(--primary)}
 .opt:active:not(:disabled){transform:scale(.99)}
 .opt .num{flex:0 0 auto; width:22px; height:22px; border-radius:7px; margin-top:1px;
   display:flex; align-items:center; justify-content:center;
@@ -846,6 +847,7 @@ body.no-list .hint{display:none}
   function resetAnswerUI(){
     answered = false;
     answerState = null;
+    clearPaint();
     $('note').classList.remove('show');
     $('note').innerHTML = '';
     $('req').classList.remove('show', 'ok');
@@ -879,10 +881,12 @@ body.no-list .hint{display:none}
   }
 
   // 选项是一次性重建的（#opts 上挂的是委托监听，重建不丢事件）
+  // 重建后要把判定结果补回去，否则展开/收起会把绿/红刷掉
   function renderOpts(){
     var html = '';
     for(var k=0;k<opts.length;k++) html += optHTML(k);
     $('opts').innerHTML = html;
+    if(paintK !== null) applyPaint();
   }
 
   function toggleExpand(k){
@@ -1008,16 +1012,34 @@ body.no-list .hint{display:none}
     el.classList.add('show');
   }
 
-  function paintOptions(k){
-    var btns = $('opts').querySelectorAll('.opt');
+  // 选项着色：k = 作答下标（-1 = 没选、看答案），guess = 按过 ← 承认是蒙的
+  var paintK = null, paintGuess = false;
+
+  function applyPaint(){
+    var box = $('opts');
+    var btns = box.querySelectorAll('.opt');
+    if(paintK === null){ box.classList.remove('done'); return; }
     var ci = correctIndex();
+    box.classList.add('done');
     for(var b=0;b<btns.length;b++){
-      btns[b].disabled = true;
-      var bi = parseInt(btns[b].getAttribute('data-k'), 10);
-      if(bi === ci) btns[b].classList.add('correct');
-      else if(bi === k) btns[b].classList.add('wrong');
-      else btns[b].classList.add('dim');
+      var btn = btns[b], bi = parseInt(btn.getAttribute('data-k'), 10);
+      btn.disabled = true;
+      btn.classList.remove('correct', 'wrong', 'dim');
+      if(paintGuess) btn.classList.add('dim');
+      else if(bi === ci) btn.classList.add('correct');
+      else if(bi === paintK) btn.classList.add('wrong');
+      else btn.classList.add('dim');
     }
+  }
+
+  function paintOptions(k){
+    paintK = k; paintGuess = false;
+    applyPaint();
+  }
+
+  function clearPaint(){
+    paintK = null; paintGuess = false;
+    $('opts').classList.remove('done');
   }
 
   function noteHTML(chosen){
@@ -1060,6 +1082,7 @@ body.no-list .hint{display:none}
       msg = reinsertMsg(gap);
     }
 
+    expandAllOpts();
     paintOptions(k);
     $('note').innerHTML = noteHTML(right ? -1 : k);
     $('note').classList.add('show');
@@ -1068,8 +1091,6 @@ body.no-list .hint{display:none}
     $('btnNext').hidden = false;
     if(right){ $('btnNext').disabled = false; $('btnNext').textContent = '继续 →'; }
     else startLock();
-
-    expandAllOpts();
     try{ $('btnNext').focus({ preventScroll:true }); }catch(e){}
     updateStats();
     updateKeyHints();
@@ -1092,12 +1113,9 @@ body.no-list .hint{display:none}
     sessOk[cur] = Math.max(0, (sessOk[cur] || 0) - 1);
     var gap = registerWrong();
     answerState = 'guessed';
+    paintGuess = true;
+    applyPaint();
 
-    var btns = $('opts').querySelectorAll('.opt');
-    for(var b=0;b<btns.length;b++){
-      btns[b].classList.remove('correct');
-      btns[b].classList.add('dim');
-    }
     $('note').innerHTML = '<div class="chosen"><b>按了 ←：</b>算你蒙的，这个词改判为答错。' +
                           '<span class="from">（趁现在还没忘，记牢它）</span></div>' + noteHTML(-1);
     showReq(reinsertMsg(gap));
@@ -1125,10 +1143,10 @@ body.no-list .hint{display:none}
       if(queue[i] === cur){ queue.splice(i, 1); break; }
     }
 
-    // 选项原样恢复，不重新抽干扰项
-    renderOpts();
+    // 选项原样恢复，不重新抽干扰项（先清判定状态再重建，否则会把红/绿补回来）
     stopLock();
     resetAnswerUI();
+    renderOpts();
     updateStats();
     updateKeyHints();
   }
