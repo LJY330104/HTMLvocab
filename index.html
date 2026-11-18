@@ -456,11 +456,16 @@ body.no-list .hint{display:none}
             <div class="setlab"><span>「以上都不对」混淆项</span>
               <label class="sw"><input type="checkbox" id="notaChk" checked aria-label="启用以上都不对"><i></i></label>
             </div>
-            <p class="setsub">开启后，每道题的 D 选项固定变成「以上都不对」——它一定不是正确答案。</p>
+            <p class="setsub">开启后，每道题的 D 选项固定变成「以上都不对」。它有时就是正确答案（那时 A~C 全错）。</p>
             <div class="setchild" id="notaRow">
-              <div class="setlab"><span>出现频率</span><b id="notaOut">30%</b></div>
-              <input class="rng" type="range" id="notaRng" min="0" max="100" step="5" value="30"
+              <div class="setlab"><span>出现频率</span><b id="notaOut">20%</b></div>
+              <input class="rng" type="range" id="notaRng" min="0" max="100" step="5" value="20"
                      aria-label="以上都不对出现频率">
+            </div>
+            <div class="setchild" id="notaAnsRow">
+              <div class="setlab"><span>它就是答案的概率</span><b id="notaAnsOut">20%</b></div>
+              <input class="rng" type="range" id="notaAnsRng" min="0" max="100" step="5" value="20"
+                     aria-label="以上都不对作为正确答案的概率">
             </div>
           </div>
           <div class="setrow setgroup">
@@ -737,13 +742,21 @@ body.no-list .hint{display:none}
       picked[Math.floor(Math.random() * picked.length)] = { t: e[0] + ' ' + e[1], correct:false, src:-1 };
     }
     var notaOn = (QS.nota && QS.notaRate > 0 && Math.random() * 100 < QS.notaRate);
-    // 三个干扰项打乱后，把正确项插进 A~C（开着混淆项时 D 位被占，正确项不能再放 D）
-    var out = shuffle(picked).slice(0, notaOn ? 2 : 3);   // 混淆项占掉 D，就只用 2 个干扰项
-    var slots = notaOn ? 3 : 4;
-    out.splice(Math.floor(Math.random() * slots), 0, { t: textOf(idx), correct:true, src:idx });
-    // 「以上都不对」固定钉在 D（第 4 个），它本身永远不是正确答案
-    if(notaOn){
-      out.push({ t: '以上都不对（None of the above）', correct:false, src:-1, nota:true });
+    // 出现了「以上都不对」，还有 notaAns 的概率它就是正确答案（这时 A~C 全是错的）
+    var notaWin = notaOn && QS.notaAns > 0 && Math.random() * 100 < QS.notaAns;
+    var NOTA = { t: '以上都不对（None of the above）', correct:false, src:-1, nota:true };
+    var out;
+    if(notaWin){
+      // 三个干扰项 + D 位「以上都不对」，正确项就是 D
+      out = shuffle(picked).slice(0, 3);
+      out.push({ t: NOTA.t, correct:true, src:-1, nota:true });
+    } else {
+      // 三个干扰项打乱后，把正确项插进 A~C（开着混淆项时 D 位被占，正确项不能再放 D）
+      out = shuffle(picked).slice(0, notaOn ? 2 : 3);   // 混淆项占掉 D，就只用 2 个干扰项
+      var slots = notaOn ? 3 : 4;
+      out.splice(Math.floor(Math.random() * slots), 0, { t: textOf(idx), correct:true, src:idx });
+      // 「以上都不对」固定钉在 D（第 4 个）
+      if(notaOn) out.push({ t: NOTA.t, correct:false, src:-1, nota:true });
     }
     return out;
   }
@@ -905,7 +918,8 @@ body.no-list .hint{display:none}
 
   // ---- 判定与反馈 ----
   var SET_KEY = 'satvocab.quiz.v1';
-  var QS = { lock: 1.5, nota: true, notaRate: 30 };   // 答题设置：等待时长 / 以上都不对 / 出现频率
+  var QS = { lock: 1.5, nota: true, notaRate: 20, notaAns: 20 };
+  // 答题设置：等待时长 / 以上都不对出现频率 / 出现后它当正确答案的概率
   var LOCK_MS = 1500;                 // 答错后要等的时长（跟着设置走）
   var lockTimer = null, lockUntil = 0;
   var answerState = null;             // right / wrong / revealed / guessed
@@ -925,7 +939,8 @@ body.no-list .hint{display:none}
       if(o && typeof o === 'object'){
         QS.lock = Math.round(clampNum(o.lock, 0.5, 3, 1.5) * 10) / 10;
         if(typeof o.nota === 'boolean') QS.nota = o.nota;
-        QS.notaRate = Math.round(clampNum(o.notaRate, 0, 100, 30) / 5) * 5;
+        QS.notaRate = Math.round(clampNum(o.notaRate, 0, 100, 20) / 5) * 5;
+        if(typeof o.notaAns === 'number') QS.notaAns = Math.round(clampNum(o.notaAns, 0, 100, 20) / 5) * 5;
       }
     }
     LOCK_MS = Math.round(QS.lock * 1000);
@@ -941,7 +956,10 @@ body.no-list .hint{display:none}
     $('notaChk').checked = !!QS.nota;
     $('notaRng').value = String(QS.notaRate);
     $('notaOut').textContent = QS.notaRate + '%';
+    $('notaAnsRng').value = String(QS.notaAns);
+    $('notaAnsOut').textContent = QS.notaAns + '%';
     $('notaRow').classList.toggle('off', !QS.nota);
+    $('notaAnsRow').classList.toggle('off', !QS.nota);
   }
 
   function setPanelOpen(open){
@@ -1045,18 +1063,19 @@ body.no-list .hint{display:none}
   function noteHTML(chosen){
     var d = W(cur);
     var html = '';
+    var ci = correctIndex(), notaWin = (ci >= 0 && opts[ci] && opts[ci].nota);
     if(chosen >= 0){
-      var o = opts[chosen];
-      html += '<div class="chosen"><b>你选的：</b>' + esc(o.t) +
-              (o.nota
-                ? '　<span class="from">（混淆项，一定不对——正确答案在 A~C 里）</span>'
-                : o.src >= 0
-                  ? '　<span class="from">（其实是 ' + esc(W(o.src)[0]) + ' 的意思）</span>'
-                  : '　<span class="from">（这个词库里没有它，纯干扰项）</span>') +
-              '</div>';
+      var o = opts[chosen], why;
+      if(o.correct) why = '　<span class="from">（选对了）</span>';
+      else if(o.nota) why = '　<span class="from">（这题它是混子，正确答案在 A~C 里）</span>';
+      else if(notaWin) why = '　<span class="from">（A~C 都不是它的意思，正确答案是「以上都不对」）</span>';
+      else if(o.src >= 0) why = '　<span class="from">（其实是 ' + esc(W(o.src)[0]) + ' 的意思）</span>';
+      else why = '　<span class="from">（这个词库里没有它，纯干扰项）</span>';
+      html += '<div class="chosen"><b>你选的：</b>' + esc(o.t) + why + '</div>';
     }
     html += '<b>' + esc(d[0]) + '</b> ' + esc(d[1]) + ' &nbsp;·&nbsp; ' + esc(d[2]) +
             '<br><span style="opacity:.8">' + esc(d[3]) + '</span>';
+    if(notaWin && chosen < 0) html += '<br><span style="opacity:.8">这题的 A~C 都不是它的意思——正确答案是 D 的「以上都不对」。</span>';
     return html;
   }
 
@@ -1283,7 +1302,12 @@ body.no-list .hint{display:none}
   });
 
   $('notaRng').addEventListener('input', function(){
-    QS.notaRate = Math.round(clampNum(this.value, 0, 100, 30) / 5) * 5;
+    QS.notaRate = Math.round(clampNum(this.value, 0, 100, 20) / 5) * 5;
+    paintSet(); saveQuizSet();
+  });
+
+  $('notaAnsRng').addEventListener('input', function(){
+    QS.notaAns = Math.round(clampNum(this.value, 0, 100, 20) / 5) * 5;
     paintSet(); saveQuizSet();
   });
 
